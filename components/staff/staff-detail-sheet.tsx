@@ -1,15 +1,58 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import type { StaffProfile } from "@/lib/types"
+import { updateStaffProfile } from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
+import type { StaffPosition, StaffProfile } from "@/lib/types"
 
 export function StaffDetailSheet({
   staff,
+  positions,
   onClose,
+  onUpdated,
 }: {
   staff: StaffProfile | null
+  positions: StaffPosition[]
   onClose: () => void
+  onUpdated?: () => void
 }) {
+  const { session } = useAuth()
+  const [positionId, setPositionId] = useState<string>("")
+  const [active, setActive] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (staff) {
+      setPositionId(String(staff.staff_position_details.id))
+      setActive(staff.is_profile_active)
+      setError("")
+    }
+  }, [staff])
+
+  async function handleSave() {
+    if (!session || !staff) return
+    setSaving(true)
+    setError("")
+    try {
+      await updateStaffProfile(
+        { staff_profile_id: staff.id, staff_position: Number(positionId), is_profile_active: active },
+        session.token,
+      )
+      onUpdated?.()
+      onClose()
+    } catch {
+      setError("Couldn't save changes.")
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <Sheet open={!!staff} onOpenChange={(open) => !open && onClose()}>
       <SheetContent>
@@ -35,6 +78,7 @@ export function StaffDetailSheet({
                 </Badge>
               </div>
             </div>
+
             <div className="grid gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Phone number</p>
@@ -48,6 +92,35 @@ export function StaffDetailSheet({
                 <p className="text-muted-foreground">Employment type</p>
                 <p className="mt-1 font-medium">{staff.type_of_employment}</p>
               </div>
+            </div>
+
+            <div className="flex flex-col gap-4 border-t pt-5">
+              <p className="text-sm font-medium">Edit profile</p>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-muted-foreground">Position</label>
+                <Select value={positionId} onValueChange={(v) => setPositionId(v ?? "")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {positions.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.position_title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="text-sm text-muted-foreground">Profile active</label>
+                <Button variant="outline" size="sm" onClick={() => setActive((a) => !a)}>
+                  {active ? "Active" : "Inactive"}
+                </Button>
+              </div>
+              {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Saving…" : "Save changes"}
+              </Button>
             </div>
           </div>
         )}

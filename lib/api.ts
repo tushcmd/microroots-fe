@@ -59,6 +59,22 @@ async function apiCall<T>(
   return (await response.json()) as ApiResponse<T>
 }
 
+// --- Setup (first-run admin) ---------------------------------------------
+
+export async function checkAdminProfile(): Promise<boolean> {
+  const res = await apiCall<{ admin_profile_exists: boolean }>(
+    "/staff-profile/check-admin-profile/",
+  )
+  return Boolean(res.admin_profile_exists)
+}
+
+export async function createAdminProfile(username: string): Promise<void> {
+  await apiCall("/staff-profile/create-admin-profile/", {
+    method: "POST",
+    body: JSON.stringify({ username }),
+  })
+}
+
 // --- Auth -------------------------------------------------------------
 
 export async function staffLogin(
@@ -94,6 +110,53 @@ export async function createStaffProfile(email: string, token: string): Promise<
 
 export async function getAllStaffPositions(token: string) {
   const res = await apiCall<unknown>("/staff-profile/get-all-staff-positions/", { token })
+  return Array.isArray(res) ? res : []
+}
+
+export async function createStaffPosition(
+  data: { position_title: string; position_description: string },
+  token: string,
+): Promise<void> {
+  await apiCall("/staff-profile/create-staff-position/", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token,
+  })
+}
+
+export async function updateStaffPosition(
+  data: { position_id: number; position_title: string; position_description: string },
+  token: string,
+): Promise<void> {
+  await apiCall("/staff-profile/update-staff-position/", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token,
+  })
+}
+
+// Partial update — pass only the fields you want to change, plus staff_profile_id.
+export async function updateStaffProfile(
+  data: { staff_profile_id: number } & Record<string, unknown>,
+  token: string,
+): Promise<void> {
+  await apiCall("/staff-profile/update-staff-profile/", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token,
+  })
+}
+
+export async function changeMyStaffPassword(password: string, token: string): Promise<void> {
+  await apiCall("/staff-profile/change-my-staff-password/", {
+    method: "POST",
+    body: JSON.stringify({ password }),
+    token,
+  })
+}
+
+export async function getAllAvailableRoles(token: string) {
+  const res = await apiCall<unknown>("/staff-profile/get-all-available-roles/", { token })
   return Array.isArray(res) ? res : []
 }
 
@@ -150,4 +213,26 @@ export async function getAllProductCategories(token: string) {
     { token },
   )
   return res.product_categories ?? []
+}
+
+export async function addProductCategory(
+  data: { category_name: string; description: string },
+  token: string,
+): Promise<void> {
+  await apiCall("/products/add-product-category/", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token,
+  })
+}
+
+export async function deleteProductCategory(
+  product_category_id: number,
+  token: string,
+): Promise<void> {
+  await apiCall("/products/delete-single-product-category/", {
+    method: "POST",
+    body: JSON.stringify({ product_category_id }),
+    token,
+  })
 }

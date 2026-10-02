@@ -10,6 +10,8 @@ const titleByPath: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/staff": "Staff",
   "/products": "Products",
+  "/roles": "Roles",
+  "/settings": "Settings",
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

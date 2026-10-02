@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAllProducts, getAllStockPurchases } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { mockProducts, mockPurchases } from "@/lib/mock-data"
 import type { Product, StockPurchase } from "@/lib/types"
 import { AddProductDialog } from "./add-product-dialog"
+import { CategoriesPanel } from "./categories-panel"
 import { ProductsTable } from "./products-table"
 import { PurchasesTable } from "./purchases-table"
 import { RecordPurchaseDialog } from "./record-purchase-dialog"
@@ -16,15 +17,24 @@ export function ProductsView() {
   const [products, setProducts] = useState<Product[]>(mockProducts)
   const [purchases, setPurchases] = useState<StockPurchase[]>(mockPurchases)
 
-  useEffect(() => {
+  const refreshProducts = useCallback(() => {
     if (!session) return
     getAllProducts(session.token)
       .then((data) => data.length && setProducts(data as Product[]))
       .catch(() => {})
+  }, [session])
+
+  const refreshPurchases = useCallback(() => {
+    if (!session) return
     getAllStockPurchases(session.token)
       .then((data) => data.length && setPurchases(data as StockPurchase[]))
       .catch(() => {})
   }, [session])
+
+  useEffect(() => {
+    refreshProducts()
+    refreshPurchases()
+  }, [refreshProducts, refreshPurchases])
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,8 +44,8 @@ export function ProductsView() {
           <h1 className="text-2xl font-semibold tracking-tight">Products & inventory</h1>
         </div>
         <div className="flex gap-2">
-          <AddProductDialog />
-          <RecordPurchaseDialog products={products} />
+          <AddProductDialog onCreated={refreshProducts} />
+          <RecordPurchaseDialog products={products} onRecorded={refreshPurchases} />
         </div>
       </div>
 
@@ -43,12 +53,16 @@ export function ProductsView() {
         <TabsList>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="purchases">Stock purchases</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
         </TabsList>
         <TabsContent value="products">
           <ProductsTable products={products} />
         </TabsContent>
         <TabsContent value="purchases">
           <PurchasesTable purchases={purchases} />
+        </TabsContent>
+        <TabsContent value="categories">
+          <CategoriesPanel />
         </TabsContent>
       </Tabs>
     </div>

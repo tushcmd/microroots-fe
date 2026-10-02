@@ -46,3 +46,16 @@ export interface StockPurchase {
   stock_batch_number: string
   date: string
 }
+
+export interface Role {
+  id: number
+  role_title: string
+  role_number: string
+  role_description: string
+}
+
+export const UNIT_OF_MEASUREMENT = ["piece", "metre", "kg", "other", "not_selected"] as const
+export type UnitOfMeasurement = (typeof UNIT_OF_MEASUREMENT)[number]
+
+export const DISCOUNT_TYPE = ["percentage", "fixed", "not_selected"] as const
+export type DiscountType = (typeof DISCOUNT_TYPE)[number]

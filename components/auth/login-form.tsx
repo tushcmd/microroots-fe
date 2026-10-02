@@ -88,7 +88,10 @@ export function LoginForm() {
           </CardContent>
         </Card>
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          MicroRootsKe Admin · Secure staff access
+          First time setting this up?{" "}
+          <a href="/setup" className="font-medium text-foreground underline underline-offset-2">
+            Create the admin account
+          </a>
         </p>
       </div>
     </main>
