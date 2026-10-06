@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import { BarChart3, ChevronDown, CircleDollarSign, ClipboardList, Package, ShoppingCart, Sprout, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-contex-no-guard"
 import { StatCard } from "./stat-card"
 
 export function DashboardOverview() {

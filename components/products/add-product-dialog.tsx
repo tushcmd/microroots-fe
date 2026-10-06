@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { addProduct, getAllProductCategories } from "@/lib/api"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-contex-no-guard"
 import { DISCOUNT_TYPE, UNIT_OF_MEASUREMENT, type ProductCategory } from "@/lib/types"
 
 const emptyForm = {

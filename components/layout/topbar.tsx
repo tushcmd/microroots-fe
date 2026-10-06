@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { staffLogout } from "@/lib/api"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-contex-no-guard"
 
 export function Topbar({ title, onMenuClick }: { title: string; onMenuClick: () => void }) {
   const { session, logout } = useAuth()

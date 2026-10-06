@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createStaffProfile } from "@/lib/api"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-contex-no-guard"
 
 export function AddStaffDialog({ onCreated }: { onCreated?: () => void }) {
   const { session } = useAuth()

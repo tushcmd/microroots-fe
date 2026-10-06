@@ -1,6 +1,6 @@
 import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
-import { AuthProvider } from "@/lib/auth-context"
+import { AuthProvider } from "@/lib/auth-contex-no-guard"
 import "./globals.css"
 
 export const metadata: Metadata = {

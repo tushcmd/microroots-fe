@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { addProductCategory, deleteProductCategory, getAllProductCategories } from "@/lib/api"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-contex-no-guard"
 import type { ProductCategory } from "@/lib/types"
 
 export function CategoriesPanel() {
