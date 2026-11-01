@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAllStaffPositions, getAllStaffProfiles } from "@/lib/api"
-import { useAuth } from "@/lib/auth-contex-no-guard"
+import { useAuth } from "@/lib/auth-context"
 import { mockStaff } from "@/lib/mock-data"
 import type { StaffPosition, StaffProfile } from "@/lib/types"
 import { AddStaffDialog } from "./add-staff-dialog"

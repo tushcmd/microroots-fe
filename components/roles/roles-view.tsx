@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { getAllAvailableRoles } from "@/lib/api"
-import { useAuth } from "@/lib/auth-contex-no-guard"
+import { useAuth } from "@/lib/auth-context"
 import type { Role } from "@/lib/types"
 
 export function RolesView() {

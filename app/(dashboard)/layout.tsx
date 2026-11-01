@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Topbar } from "@/components/layout/topbar"
-import { useAuth } from "@/lib/auth-contex-no-guard"
+import { useAuth } from "@/lib/auth-context"
 
 const titleByPath: Record<string, string> = {
   "/dashboard": "Dashboard",

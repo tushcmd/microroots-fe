@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ApiError, staffLogin } from "@/lib/api"
-import { useAuth } from "@/lib/auth-contex-no-guard"
+import { useAuth } from "@/lib/auth-context"
 import { Brand } from "@/components/layout/brand"
 
 export function LoginForm() {

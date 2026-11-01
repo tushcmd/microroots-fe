@@ -36,6 +36,7 @@ async function apiCall<T>(
   let response: Response
   try {
     response = await fetch(url, { ...init, headers })
+    console.log(response.body)
   } catch {
     // Network-level failure (timeout, DNS, connection refused) never reaches
     // the JSON branch below, so it needs its own typed error.
@@ -77,7 +78,7 @@ export async function createAdminProfile(username: string): Promise<void> {
 
 // --- Auth -------------------------------------------------------------
 
-export async function staffLogin(
+export async function staffLogin(                          
   staff_number: string,
   password: string,
 ): Promise<{ user_token: string; full_name: string; user_role: string }> {

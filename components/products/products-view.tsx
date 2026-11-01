@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAllProducts, getAllStockPurchases } from "@/lib/api"
-import { useAuth } from "@/lib/auth-contex-no-guard"
+import { useAuth } from "@/lib/auth-context"
 import { mockProducts, mockPurchases } from "@/lib/mock-data"
 import type { Product, StockPurchase } from "@/lib/types"
 import { AddProductDialog } from "./add-product-dialog"

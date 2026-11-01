@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createStaffProfile } from "@/lib/api"
-import { useAuth } from "@/lib/auth-contex-no-guard"
+import { useAuth } from "@/lib/auth-context"
 
 export function AddStaffDialog({ onCreated }: { onCreated?: () => void }) {
   const { session } = useAuth()
@@ -48,9 +48,11 @@ export function AddStaffDialog({ onCreated }: { onCreated?: () => void }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add staff profile</DialogTitle>
-          <DialogDescription>
+          <DialogTitle>{session?.token ?? "No token"}</DialogTitle>
+          {/* <DialogDescription>
             Create an account and send credentials to a staff member&apos;s email.
-          </DialogDescription>
+          </DialogDescription> */}
+
         </DialogHeader>
         <div className="flex flex-col gap-2 py-4">
           <Label htmlFor="staff-email">Email address</Label>
