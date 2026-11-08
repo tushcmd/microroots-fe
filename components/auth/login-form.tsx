@@ -24,7 +24,11 @@ export function LoginForm() {
     setLoading(true)
     try {
       const data = await staffLogin(staffNumber, password)
-      login({ name: data.full_name, role: data.user_role, token: data.user_token })
+      login({
+        name: data.full_name,
+        role: data.user_role,
+        token: data.user_token,
+      })
       router.push("/dashboard")
     } catch (err) {
       if (err instanceof ApiError && err.status === 406) {

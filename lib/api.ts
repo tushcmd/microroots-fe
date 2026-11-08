@@ -37,7 +37,6 @@ async function apiCall<T>(
   let response: Response
   try {
     response = await fetch(url, { ...init, headers })
-    console.log(response.body)
   } catch {
     // Network-level failure (timeout, DNS, connection refused) never reaches
     // the JSON branch below, so it needs its own typed error.
@@ -61,13 +60,35 @@ async function apiCall<T>(
   return (await response.json()) as ApiResponse<T>
 }
 
+function asList<T>(res: ApiResponse<unknown>, keys: string[] = []): T[] {
+  if (Array.isArray(res)) return res as T[]
+  if (Array.isArray(res.payload)) return res.payload as T[]
+  for (const key of keys) {
+    if (Array.isArray(res[key])) return res[key] as T[]
+  }
+  if (res.payload && typeof res.payload === "object") {
+    const payload = res.payload as Record<string, unknown>
+    for (const key of keys) {
+      if (Array.isArray(payload[key])) return payload[key] as T[]
+    }
+  }
+  return []
+}
+
+function asFlag(res: ApiResponse<unknown>, key: string) {
+  if (typeof res[key] === "boolean") return res[key] as boolean
+  if (res.payload && typeof res.payload === "object" && !Array.isArray(res.payload)) {
+    const value = (res.payload as Record<string, unknown>)[key]
+    if (typeof value === "boolean") return value
+  }
+  return false
+}
+
 // --- Setup (first-run admin) ---------------------------------------------
 
 export async function checkAdminProfile(): Promise<boolean> {
-  const res = await apiCall<{ admin_profile_exists: boolean }>(
-    "/staff-profile/check-admin-profile/",
-  )
-  return Boolean(res.admin_profile_exists)
+  const res = await apiCall<unknown>("/staff-profile/check-admin-profile/")
+  return asFlag(res, "admin_profile_exists")
 }
 
 export async function createAdminProfile(username: string): Promise<void> {
@@ -79,15 +100,15 @@ export async function createAdminProfile(username: string): Promise<void> {
 
 // --- Auth -------------------------------------------------------------
 
-export async function staffLogin(                          
+export async function staffLogin(
   staff_number: string,
   password: string,
-): Promise<{ user_token: string; full_name: string; user_role: string }> {
-  const res = await apiCall<{ user_token: string; full_name: string; user_role: string }>(
+): Promise<{ user_token: string; full_name: string | null; user_role: string | null }> {
+  const res = await apiCall<{ user_token: string; full_name: string | null; user_role: string | null }>(
     "/staff-profile/staff-login/",
     { method: "POST", body: JSON.stringify({ staff_number, password }) },
   )
-  if (!res.payload) throw new ApiError("Malformed login response", 500)
+  if (!res.payload?.user_token) throw new ApiError("Malformed login response", 500)
   return res.payload
 }
 
@@ -99,7 +120,7 @@ export async function staffLogout(token: string): Promise<void> {
 
 export async function getAllStaffProfiles(token: string) {
   const res = await apiCall<unknown>("/staff-profile/get-all-staff-profiles/", { token })
-  return Array.isArray(res) ? res : []
+  return asList(res, ["staff_profiles", "profiles"])
 }
 
 export async function createStaffProfile(email: string, token: string): Promise<void> {
@@ -112,7 +133,7 @@ export async function createStaffProfile(email: string, token: string): Promise<
 
 export async function getAllStaffPositions(token: string) {
   const res = await apiCall<unknown>("/staff-profile/get-all-staff-positions/", { token })
-  return Array.isArray(res) ? res : []
+  return asList(res, ["staff_positions", "positions"])
 }
 
 export async function createStaffPosition(
@@ -159,14 +180,14 @@ export async function changeMyStaffPassword(password: string, token: string): Pr
 
 export async function getAllAvailableRoles(token: string) {
   const res = await apiCall<unknown>("/staff-profile/get-all-available-roles/", { token })
-  return Array.isArray(res) ? res : []
+  return asList(res, ["roles", "available_roles"])
 }
 
 // --- Products & inventory -------------------------------------------------
 
 export async function getAllProducts(token: string) {
-  const res = await apiCall<{ products: unknown[] }>("/products/get-all-products/", { token })
-  return res.products ?? []
+  const res = await apiCall<unknown>("/products/get-all-products/", { token })
+  return asList(res, ["products"])
 }
 
 export async function addProduct(
@@ -191,11 +212,8 @@ export async function addProduct(
 }
 
 export async function getAllStockPurchases(token: string) {
-  const res = await apiCall<{ stock_purchase_inventories: unknown[] }>(
-    "/products/get-all-stock-purchase-inventories/",
-    { token },
-  )
-  return res.stock_purchase_inventories ?? []
+  const res = await apiCall<unknown>("/products/get-all-stock-purchase-inventories/", { token })
+  return asList(res, ["stock_purchase_inventories"])
 }
 
 export async function addStockPurchase(
@@ -210,11 +228,8 @@ export async function addStockPurchase(
 }
 
 export async function getAllProductCategories(token: string) {
-  const res = await apiCall<{ product_categories: unknown[] }>(
-    "/products/get-all-product-categories/",
-    { token },
-  )
-  return res.product_categories ?? []
+  const res = await apiCall<unknown>("/products/get-all-product-categories/", { token })
+  return asList(res, ["product_categories"])
 }
 
 export async function addProductCategory(

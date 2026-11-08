@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAllProducts, getAllStockPurchases } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
-import { mockProducts, mockPurchases } from "@/lib/mock-data"
 import type { Product, StockPurchase } from "@/lib/types"
 import { AddProductDialog } from "./add-product-dialog"
 import { CategoriesPanel } from "./categories-panel"
@@ -14,21 +13,21 @@ import { RecordPurchaseDialog } from "./record-purchase-dialog"
 
 export function ProductsView() {
   const { session } = useAuth()
-  const [products, setProducts] = useState<Product[]>(mockProducts)
-  const [purchases, setPurchases] = useState<StockPurchase[]>(mockPurchases)
+  const [products, setProducts] = useState<Product[]>([])
+  const [purchases, setPurchases] = useState<StockPurchase[]>([])
 
   const refreshProducts = useCallback(() => {
     if (!session) return
     getAllProducts(session.token)
-      .then((data) => data.length && setProducts(data as Product[]))
-      .catch(() => {})
+      .then((data) => setProducts(data as Product[]))
+      .catch(() => setProducts([]))
   }, [session])
 
   const refreshPurchases = useCallback(() => {
     if (!session) return
     getAllStockPurchases(session.token)
-      .then((data) => data.length && setPurchases(data as StockPurchase[]))
-      .catch(() => {})
+      .then((data) => setPurchases(data as StockPurchase[]))
+      .catch(() => setPurchases([]))
   }, [session])
 
   useEffect(() => {

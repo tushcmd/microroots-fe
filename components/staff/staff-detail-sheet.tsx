@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { updateStaffProfile } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { displayInitials, displayName, displayText } from "@/lib/display"
 import type { StaffPosition, StaffProfile } from "@/lib/types"
 
 export function StaffDetailSheet({
@@ -29,7 +30,7 @@ export function StaffDetailSheet({
 
   useEffect(() => {
     if (staff) {
-      setPositionId(String(staff.staff_position_details.id))
+      setPositionId(staff.staff_position_details ? String(staff.staff_position_details.id) : "")
       setActive(staff.is_profile_active)
       setError("")
     }
@@ -41,7 +42,11 @@ export function StaffDetailSheet({
     setError("")
     try {
       await updateStaffProfile(
-        { staff_profile_id: staff.id, staff_position: Number(positionId), is_profile_active: active },
+        {
+          staff_profile_id: staff.id,
+          ...(positionId ? { staff_position: Number(positionId) } : {}),
+          is_profile_active: active,
+        },
         session.token,
       )
       onUpdated?.()
@@ -57,9 +62,12 @@ export function StaffDetailSheet({
     <Sheet open={!!staff} onOpenChange={(open) => !open && onClose()}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>{staff && `${staff.first_name} ${staff.last_name}`}</SheetTitle>
+          <SheetTitle>
+            {staff && displayName(staff.first_name, staff.last_name, staff.email_address)}
+          </SheetTitle>
           <SheetDescription>
-            {staff?.staff_position_details.position_title} · {staff?.staff_number}
+            {staff?.staff_position_details?.position_title ?? "No position assigned"} ·{" "}
+            {staff?.staff_number}
           </SheetDescription>
         </SheetHeader>
         {staff && (
@@ -67,8 +75,7 @@ export function StaffDetailSheet({
             <div className="flex items-center gap-3">
               <Avatar className="size-14">
                 <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
-                  {staff.first_name[0]}
-                  {staff.last_name[0]}
+                  {displayInitials(staff.first_name, staff.last_name, staff.email_address)}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -82,15 +89,15 @@ export function StaffDetailSheet({
             <div className="grid gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Phone number</p>
-                <p className="mt-1 font-medium">{staff.phone_number}</p>
+                <p className="mt-1 font-medium">{displayText(staff.phone_number)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Country</p>
-                <p className="mt-1 font-medium">{staff.country_name}</p>
+                <p className="mt-1 font-medium">{displayText(staff.country_name)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Employment type</p>
-                <p className="mt-1 font-medium">{staff.type_of_employment}</p>
+                <p className="mt-1 font-medium">{displayText(staff.type_of_employment)}</p>
               </div>
             </div>
 
@@ -98,9 +105,9 @@ export function StaffDetailSheet({
               <p className="text-sm font-medium">Edit profile</p>
               <div className="flex flex-col gap-2">
                 <label className="text-sm text-muted-foreground">Position</label>
-                <Select value={positionId} onValueChange={(v) => setPositionId(v ?? "")}>
+                <Select value={positionId || undefined} onValueChange={(v) => setPositionId(v ?? "")}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="No position assigned" />
                   </SelectTrigger>
                   <SelectContent>
                     {positions.map((p) => (

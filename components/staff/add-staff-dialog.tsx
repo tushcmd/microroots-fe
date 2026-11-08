@@ -48,11 +48,9 @@ export function AddStaffDialog({ onCreated }: { onCreated?: () => void }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add staff profile</DialogTitle>
-          <DialogTitle>{session?.token ?? "No token"}</DialogTitle>
-          {/* <DialogDescription>
+          <DialogDescription>
             Create an account and send credentials to a staff member&apos;s email.
-          </DialogDescription> */}
-
+          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-2 py-4">
           <Label htmlFor="staff-email">Email address</Label>

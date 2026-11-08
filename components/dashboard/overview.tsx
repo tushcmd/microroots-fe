@@ -10,7 +10,7 @@ import { StatCard } from "./stat-card"
 export function DashboardOverview() {
   const { session } = useAuth()
   const router = useRouter()
-  const firstName = session?.name.split(" ")[0] ?? "there"
+  const firstName = session?.name?.split(" ")[0] || "there"
 
   return (
     <div className="flex flex-col gap-7">

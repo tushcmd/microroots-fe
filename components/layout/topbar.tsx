@@ -12,16 +12,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { staffLogout } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { displayInitials, displayText } from "@/lib/display"
 
 export function Topbar({ title, onMenuClick }: { title: string; onMenuClick: () => void }) {
   const { session, logout } = useAuth()
   if (!session) return null
 
-  const initials = session.name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
+  const displayName = displayText(session.name, "Staff")
+  const initials = displayInitials(session.name?.split(" ")[0], session.name?.split(" ")[1], displayName)
 
   async function handleSignOut() {
     try {
@@ -48,8 +46,8 @@ export function Topbar({ title, onMenuClick }: { title: string; onMenuClick: () 
             </AvatarFallback>
           </Avatar>
           <span className="hidden text-left sm:block">
-            <span className="block text-sm font-medium">{session.name}</span>
-            <span className="block text-xs text-muted-foreground">{session.role}</span>
+            <span className="block text-sm font-medium">{displayName}</span>
+            <span className="block text-xs text-muted-foreground">{displayText(session.role, "Staff")}</span>
           </span>
           <ChevronDown className="size-4 text-muted-foreground" />
         </DropdownMenuTrigger>

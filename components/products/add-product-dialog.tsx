@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { addProduct, getAllProductCategories } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { displayText } from "@/lib/display"
 import { DISCOUNT_TYPE, UNIT_OF_MEASUREMENT, type ProductCategory } from "@/lib/types"
 
 const emptyForm = {
@@ -117,7 +118,7 @@ export function AddProductDialog({ onCreated }: { onCreated?: () => void }) {
                 )}
                 {categories.map((cat) => (
                   <SelectItem key={cat.id} value={String(cat.id)}>
-                    {cat.category_name}
+                    {displayText(cat.category_name)}
                   </SelectItem>
                 ))}
               </SelectContent>

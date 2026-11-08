@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createStaffPosition, getAllStaffPositions } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { displayText } from "@/lib/display"
 import type { StaffPosition } from "@/lib/types"
 
 export function PositionsPanel() {
@@ -32,7 +33,7 @@ export function PositionsPanel() {
     if (!session) return
     getAllStaffPositions(session.token)
       .then((data) => setPositions(data as StaffPosition[]))
-      .catch(() => {})
+      .catch(() => setPositions([]))
   }
 
   useEffect(refresh, [session])
@@ -104,8 +105,8 @@ export function PositionsPanel() {
           )}
           {positions.map((position) => (
             <div key={position.id} className="py-3">
-              <p className="text-sm font-medium">{position.position_title}</p>
-              <p className="text-xs text-muted-foreground">{position.position_description}</p>
+              <p className="text-sm font-medium">{displayText(position.position_title)}</p>
+              <p className="text-xs text-muted-foreground">{displayText(position.position_description)}</p>
             </div>
           ))}
         </div>

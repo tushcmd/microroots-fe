@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { addProductCategory, deleteProductCategory, getAllProductCategories } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { displayText } from "@/lib/display"
 import type { ProductCategory } from "@/lib/types"
 
 export function CategoriesPanel() {
@@ -32,7 +33,7 @@ export function CategoriesPanel() {
     if (!session) return
     getAllProductCategories(session.token)
       .then((data) => setCategories(data as ProductCategory[]))
-      .catch(() => {})
+      .catch(() => setCategories([]))
   }
 
   useEffect(refresh, [session])
@@ -111,8 +112,8 @@ export function CategoriesPanel() {
           {categories.map((cat) => (
             <div key={cat.id} className="flex items-center justify-between py-3">
               <div>
-                <p className="text-sm font-medium">{cat.category_name}</p>
-                <p className="text-xs text-muted-foreground">{cat.category_description}</p>
+                <p className="text-sm font-medium">{displayText(cat.category_name)}</p>
+                <p className="text-xs text-muted-foreground">{displayText(cat.category_description)}</p>
               </div>
               <Button variant="ghost" size="icon" onClick={() => handleDelete(cat.id)}>
                 <Trash2 className="size-4 text-muted-foreground" />

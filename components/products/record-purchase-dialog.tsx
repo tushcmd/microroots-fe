@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { addStockPurchase } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { displayText } from "@/lib/display"
 import type { Product } from "@/lib/types"
 
 export function RecordPurchaseDialog({
@@ -77,7 +78,7 @@ export function RecordPurchaseDialog({
               <SelectContent>
                 {products.map((product) => (
                   <SelectItem key={product.id} value={String(product.id)}>
-                    {product.product_name}
+                    {displayText(product.product_name)}
                   </SelectItem>
                 ))}
               </SelectContent>

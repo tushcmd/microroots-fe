@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { displayText, formatKes } from "@/lib/display"
 import type { StockPurchase } from "@/lib/types"
 
 export function PurchasesTable({ purchases }: { purchases: StockPurchase[] }) {
@@ -18,15 +19,22 @@ export function PurchasesTable({ purchases }: { purchases: StockPurchase[] }) {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {purchases.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
+                    No stock purchases yet.
+                  </TableCell>
+                </TableRow>
+              )}
               {purchases.map((purchase) => (
                 <TableRow key={purchase.id}>
-                  <TableCell className="font-medium">{purchase.product_name}</TableCell>
-                  <TableCell>{purchase.quantity}</TableCell>
-                  <TableCell>KES {purchase.stock_price_per_unit.toLocaleString()}</TableCell>
+                  <TableCell className="font-medium">{displayText(purchase.product_name)}</TableCell>
+                  <TableCell>{displayText(purchase.quantity)}</TableCell>
+                  <TableCell>{formatKes(purchase.stock_price_per_unit)}</TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {purchase.stock_batch_number}
+                    {displayText(purchase.stock_batch_number)}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{purchase.date}</TableCell>
+                  <TableCell className="text-muted-foreground">{displayText(purchase.date)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

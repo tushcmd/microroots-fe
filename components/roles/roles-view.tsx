@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { getAllAvailableRoles } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { displayText } from "@/lib/display"
 import type { Role } from "@/lib/types"
 
 export function RolesView() {
@@ -14,7 +15,7 @@ export function RolesView() {
     if (!session) return
     getAllAvailableRoles(session.token)
       .then((data) => setRoles(data as Role[]))
-      .catch(() => {})
+      .catch(() => setRoles([]))
   }, [session])
 
   return (
@@ -36,9 +37,10 @@ export function RolesView() {
           {roles.map((role) => (
             <div key={role.id} className="p-4">
               <p className="text-sm font-medium">
-                {role.role_title} <span className="text-muted-foreground">#{role.role_number}</span>
+                {displayText(role.role_title)}{" "}
+                <span className="text-muted-foreground">#{displayText(role.role_number)}</span>
               </p>
-              <p className="text-xs text-muted-foreground">{role.role_description}</p>
+              <p className="text-xs text-muted-foreground">{displayText(role.role_description)}</p>
             </div>
           ))}
         </CardContent>
