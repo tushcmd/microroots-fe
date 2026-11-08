@@ -44,8 +44,18 @@ export function StaffTable() {
     refreshPositions()
   }, [refreshStaff, refreshPositions])
 
+  // const positionTitles = useMemo(
+  //   () => [...new Set(staff.map((person) => person.staff_position_details.position_title))],
+  //   [staff],
+  // )
   const positionTitles = useMemo(
-    () => [...new Set(staff.map((person) => person.staff_position_details.position_title))],
+    () => [
+      ...new Set(
+        staff
+          .map((person) => person.staff_position_details?.position_title)
+          .filter((title): title is string => Boolean(title)),
+      ),
+    ],
     [staff],
   )
 
@@ -54,7 +64,8 @@ export function StaffTable() {
       staff.filter(
         (person) =>
           `${person.first_name} ${person.last_name}`.toLowerCase().includes(query.toLowerCase()) &&
-          (position === "all" || person.staff_position_details.position_title === position),
+          // (position === "all" || person.staff_position_details.position_title === position),
+          (position === "all" || person.staff_position_details?.position_title === position),
       ),
     [staff, query, position],
   )
@@ -121,19 +132,21 @@ export function StaffTable() {
                           <div className="flex items-center gap-3">
                             <Avatar className="size-8">
                               <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                                {person.first_name[0]}
-                                {person.last_name[0]}
+                              {person.first_name?.[0] ?? person.email_address[0].toUpperCase()}
+                              {person.last_name?.[0] ?? ""}
                               </AvatarFallback>
                             </Avatar>
                             <div>
                               <p className="font-medium">
-                                {person.first_name} {person.last_name}
+                                {/* {person.first_name} {person.last_name} */}
+                                {`${person.first_name ?? ""} ${person.last_name ?? ""}`.trim() || person.email_address}
                               </p>
                               <p className="text-xs text-muted-foreground">{person.staff_number}</p>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{person.staff_position_details.position_title}</TableCell>
+                        {/* <TableCell>{person.staff_position_details.position_title}</TableCell> */}
+                        <TableCell>{person.staff_position_details?.position_title ?? "Unassigned"}</TableCell>
                         <TableCell className="text-muted-foreground">{person.email_address}</TableCell>
                         <TableCell className="text-muted-foreground">{person.phone_number}</TableCell>
                         <TableCell>

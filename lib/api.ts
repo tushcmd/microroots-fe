@@ -1,6 +1,7 @@
 // Base API client for the MicroRootsKe backend.
 // Swap NEXT_PUBLIC_API_URL per environment rather than editing this file.
 
+// const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://169.58.210.23"
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://169.58.210.23"
 
 export interface ApiResponse<T> {
