@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useSyncExternalStore } from "react"
 import { Monitor, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
@@ -12,11 +12,13 @@ const options = [
   { value: "system", label: "System", icon: Monitor },
 ] as const
 
+function subscribe() {
+  return () => {}
+}
+
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => setMounted(true), [])
+  const mounted = useSyncExternalStore(subscribe, () => true, () => false)
 
   if (!mounted) {
     return <div className={cn("h-9 w-[132px] rounded-lg bg-muted/50", className)} />
