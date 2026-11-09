@@ -12,10 +12,12 @@ import { changeMyStaffPassword } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { notifyError } from "@/lib/notify"
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/shared/theme-toggle"
 
 const sections = [
   { id: "profile", label: "Profile", description: "Your name and photo." },
   { id: "security", label: "Security", description: "Your password and sign-in." },
+  { id: "appearance", label: "Appearance", description: "Theme and display preferences." },
 ] as const
 type SectionId = (typeof sections)[number]["id"]
 
@@ -27,15 +29,19 @@ function SettingsRow({
 }: {
   label: string
   hint?: string
-  htmlFor: string
+  htmlFor?: string
   children: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
       <div className="min-w-0 sm:max-w-[45%]">
-        <Label htmlFor={htmlFor} className="text-sm font-medium">
-          {label}
-        </Label>
+        {htmlFor ? (
+          <Label htmlFor={htmlFor} className="text-sm font-medium">
+            {label}
+          </Label>
+        ) : (
+          <p className="text-sm font-medium">{label}</p>
+        )}
         {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
       </div>
       <div className="sm:w-[280px]">{children}</div>
@@ -134,6 +140,16 @@ export function SettingsView() {
                 </CardContent>
               </Card>
             </form>
+          )}
+
+          {active === "appearance" && (
+            <Card className="border-border/70 shadow-none">
+              <CardContent className="divide-y p-0">
+                <SettingsRow label="Theme" hint="Choose light, dark, or follow your system.">
+                  <ThemeToggle />
+                </SettingsRow>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>

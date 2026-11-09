@@ -54,16 +54,6 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           )
         })}
       </nav>
-
-      <div className="rounded-xl border bg-muted/40 p-3">
-        <p className="text-xs font-semibold">Need help?</p>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          Check the API docs for integration support.
-        </p>
-        <Button variant="link" className="h-auto px-0 pt-2 text-xs">
-          View documentation
-        </Button>
-      </div>
     </aside>
   )
 }
