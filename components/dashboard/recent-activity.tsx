@@ -1,7 +1,26 @@
-import { PackagePlus } from "lucide-react"
+import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { displayText, formatKes } from "@/lib/display"
+import { asNumber, displayText, formatKes } from "@/lib/display"
 import type { StockPurchase } from "@/lib/types"
+
+function formatDay(date: unknown): string {
+  if (!date || typeof date !== "string") return "—"
+  const parsed = new Date(date)
+  return Number.isNaN(parsed.getTime()) ? "—" : String(parsed.getDate()).padStart(2, "0")
+}
+
+function formatMonth(date: unknown): string {
+  if (!date || typeof date !== "string") return "—"
+  const parsed = new Date(date)
+  return Number.isNaN(parsed.getTime())
+    ? "—"
+    : parsed.toLocaleDateString(undefined, { month: "short" })
+}
+
+function purchaseDate(p: StockPurchase): unknown {
+  return p.date ?? p.created_at ?? p.purchase_date ?? p.createdAt
+}
 
 export function RecentActivity({
   purchases,
@@ -10,65 +29,63 @@ export function RecentActivity({
   purchases: StockPurchase[] | null
   loading: boolean
 }) {
-  const recent = (purchases ?? [])
-    .slice()
-    .sort((a, b) => {
-      const dateA = a.date ? new Date(a.date).getTime() : 0
-      const dateB = b.date ? new Date(b.date).getTime() : 0
-      return dateB - dateA
-    })
-    .slice(0, 5)
+  // Sort newest first by date when available; fall back to original order
+  const sorted = [...(purchases ?? [])].sort((a, b) => {
+    const da = new Date(String(purchaseDate(a) ?? "")).getTime()
+    const db = new Date(String(purchaseDate(b) ?? "")).getTime()
+    if (Number.isNaN(da) || Number.isNaN(db)) return 0
+    return db - da
+  })
+  const recent = sorted.slice(0, 5)
 
   return (
     <Card className="border-border/70 shadow-none">
       <CardHeader>
-        <CardTitle className="text-base">Recent activity</CardTitle>
+        <CardTitle className="text-base">Recent purchases</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col">
         {loading ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">Loading…</p>
-        ) : purchases == null ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">Couldn&apos;t load recent purchases.</p>
-        ) : recent.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-              <PackagePlus className="size-4" />
-            </div>
-            <p className="text-sm text-muted-foreground">No stock purchases recorded yet.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col divide-y">
-            {recent.map((purchase) => (
-              <div key={purchase.id} className="flex items-center gap-3 py-3">
-                <div className="flex shrink-0 flex-col items-center justify-center rounded-md border border-border/70 px-2 py-1 text-center leading-none">
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase">
-                    {formatMonth(purchase.date)}
-                  </span>
-                  <span className="text-sm font-semibold">{formatDay(purchase.date)}</span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{displayText(purchase.product_name)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {displayText(purchase.quantity)} units · {formatKes(purchase.stock_price_per_unit)} each
-                  </p>
-                </div>
-              </div>
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
             ))}
           </div>
+        ) : recent.length === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">No purchases yet.</p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {recent.map((purchase) => {
+              const qty = asNumber(purchase.quantity)
+              const unit = asNumber(purchase.stock_price_per_unit)
+              const total = qty != null && unit != null ? qty * unit : null
+              const pd = purchaseDate(purchase)
+              return (
+                <div key={purchase.id} className="flex items-start gap-3">
+                  <div className="flex size-10 shrink-0 flex-col items-center justify-center rounded-lg bg-muted leading-none">
+                    <span className="text-[9px] font-semibold uppercase text-muted-foreground">
+                      {formatMonth(pd)}
+                    </span>
+                    <span className="text-sm font-semibold">{formatDay(pd)}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{displayText(purchase.product_name)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {displayText(purchase.quantity)} units
+                      {total != null ? ` · ${formatKes(total)}` : ""}
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         )}
+        <Link
+          href="/products"
+          className="mt-5 inline-flex items-center gap-1.5 self-end text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          View all purchases <ArrowRight className="size-4" />
+        </Link>
       </CardContent>
     </Card>
   )
-}
-
-function formatMonth(date: string | null) {
-  if (!date) return "—"
-  const parsed = new Date(date)
-  return Number.isNaN(parsed.getTime()) ? "—" : parsed.toLocaleDateString(undefined, { month: "short" })
-}
-
-function formatDay(date: string | null) {
-  if (!date) return "—"
-  const parsed = new Date(date)
-  return Number.isNaN(parsed.getTime()) ? "—" : String(parsed.getDate())
 }

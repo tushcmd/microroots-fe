@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ClipboardList, Package, Users, Warehouse } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageHeader, PageRoot } from "@/components/pages/shared/page-chrome"
 import { RecordPurchaseDialog } from "@/components/products/record-purchase-dialog"
 import { getAllProducts, getAllStaffProfiles, getAllStockPurchases } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
-import { asNumber, displayText } from "@/lib/display"
+import { asNumber } from "@/lib/display"
 import type { Product, StaffProfile, StockPurchase } from "@/lib/types"
 import { PurchasesChart } from "./purchases-chart"
 import { QuickActions } from "./quick-actions"
@@ -19,11 +19,11 @@ export function DashboardOverview() {
   const token = session?.token
   const firstName = session?.name?.split(" ")[0] || "there"
 
-  // null = the request failed (or hasn't finished); [] = loaded but empty
   const [staff, setStaff] = useState<StaffProfile[] | null>(null)
   const [products, setProducts] = useState<Product[] | null>(null)
   const [purchases, setPurchases] = useState<StockPurchase[] | null>(null)
   const [loading, setLoading] = useState(true)
+  const [productsFailed, setProductsFailed] = useState(false)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -35,16 +35,21 @@ export function DashboardOverview() {
 
   const loadAll = useCallback(() => {
     if (!token) return Promise.resolve()
-    // allSettled so one failing endpoint doesn't blank the whole dashboard
     return Promise.allSettled([
       getAllStaffProfiles(token),
       getAllProducts(token),
       getAllStockPurchases(token),
-    ]).then(([staffRes, productsRes, purchasesRes]) => {
+    ]).then(([s, p, pu]) => {
       if (!mountedRef.current) return
-      setStaff(staffRes.status === "fulfilled" ? (staffRes.value as StaffProfile[]) : null)
-      setProducts(productsRes.status === "fulfilled" ? (productsRes.value as Product[]) : null)
-      setPurchases(purchasesRes.status === "fulfilled" ? (purchasesRes.value as StockPurchase[]) : null)
+      setStaff(s.status === "fulfilled" ? (s.value as StaffProfile[]) : null)
+      if (p.status === "fulfilled") {
+        setProducts(p.value as Product[])
+        setProductsFailed(false)
+      } else {
+        setProducts(null)
+        setProductsFailed(true)
+      }
+      setPurchases(pu.status === "fulfilled" ? (pu.value as StockPurchase[]) : null)
       setLoading(false)
     })
   }, [token])
@@ -53,138 +58,82 @@ export function DashboardOverview() {
     loadAll()
   }, [loadAll])
 
-  const lowStock = useMemo(
-    () =>
-      (products ?? []).filter((product) => {
-        const quantity = asNumber(product.quantity)
-        const minimum = asNumber(product.minimum_quantity)
-        return quantity != null && minimum != null && quantity < minimum
-      }),
-    [products],
-  )
-
   const stockStats = useMemo(() => {
-    const withLevels = (products ?? []).filter((product) => {
-      const quantity = asNumber(product.quantity)
-      const minimum = asNumber(product.minimum_quantity)
-      return quantity != null && minimum != null
-    })
-    const healthy = withLevels.length - lowStock.length
-    return { total: withLevels.length, healthy }
-  }, [products, lowStock])
-
-  const show = (n: number | null) => (loading ? "…" : n == null ? "—" : String(n))
-  const failed = (list: unknown[] | null, label: string) =>
-    !loading && list == null ? `Couldn't load ${label}` : null
-
-  const activeStaff = staff ? staff.filter((person) => person.is_profile_active).length : null
+    if (!products) return { total: 0, healthy: 0, low: 0 }
+    let healthy = 0
+    let low = 0
+    for (const p of products) {
+      const avail = asNumber(p.quantity_available ?? p.quantity)
+      const min = asNumber(p.minimum_quantity)
+      if (avail != null && min != null) {
+        if (avail <= min) low++
+        else healthy++
+      } else {
+        healthy++
+      }
+    }
+    return { total: products.length, healthy, low }
+  }, [products])
 
   return (
-    <div className="flex flex-col gap-7">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            {new Date().toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Welcome back, {firstName}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Here&apos;s what&apos;s happening across your farm today.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <RecordPurchaseDialog products={products ?? []} onRecorded={loadAll} />
-        </div>
-      </div>
+    <PageRoot>
+      <PageHeader
+        eyebrow="Overview"
+        title={`Good to see you, ${firstName}`}
+        description="Here's what's happening across your farm today."
+      >
+        {products && <RecordPurchaseDialog products={products} onRecorded={loadAll} />}
+      </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={Users}
-          label="Active staff"
-          value={show(activeStaff)}
-          detail={failed(staff, "staff") ?? `${staff?.length ?? 0} profiles in total`}
+          label="Staff members"
+          value={staff ? String(staff.length) : "—"}
+          detail={loading ? "Loading…" : staff ? "Active profiles" : "Couldn't load"}
+          tone="blue"
           href="/staff"
         />
         <StatCard
           icon={Package}
           label="Products"
-          value={show(products ? products.length : null)}
-          detail={failed(products, "products") ?? "In your catalog"}
-          tone="blue"
-          href="/products"
-        />
-        <StatCard
-          icon={Warehouse}
-          label="Low stock alerts"
-          value={show(products ? lowStock.length : null)}
-          detail={
-            failed(products, "products") ??
-            (lowStock.length ? "Below minimum quantity" : "Everything is stocked")
-          }
-          tone="amber"
+          value={products ? String(products.length) : "—"}
+          detail={loading ? "Loading…" : products ? "In catalog" : "Couldn't load"}
+          tone="green"
           href="/products"
         />
         <StatCard
           icon={ClipboardList}
           label="Stock purchases"
-          value={show(purchases ? purchases.length : null)}
-          detail={failed(purchases, "purchases") ?? "Recorded so far"}
+          value={purchases ? String(purchases.length) : "—"}
+          detail={loading ? "Loading…" : purchases ? "Records" : "Couldn't load"}
+          tone="blue"
+          href="/products"
+        />
+        <StatCard
+          icon={Warehouse}
+          label="Low stock items"
+          value={!loading && products ? String(stockStats.low) : "—"}
+          detail={loading ? "Loading…" : stockStats.low > 0 ? "Need restocking" : "All healthy"}
+          tone={stockStats.low > 0 ? "amber" : "green"}
+          href="/products"
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-        <div className="flex flex-col gap-4">
-          <Card className="border-border/70 shadow-none">
-            <CardHeader>
-              <CardTitle className="text-base">Needs restocking</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">Loading…</p>
-              ) : products == null ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">Couldn&apos;t load products.</p>
-              ) : lowStock.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  No products are below their minimum quantity.
-                </p>
-              ) : (
-                <div className="flex flex-col divide-y">
-                  {lowStock.slice(0, 6).map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center justify-between rounded-md py-3 transition-colors hover:bg-muted/40"
-                    >
-                      <p className="text-sm font-medium">{displayText(product.product_name)}</p>
-                      <p className="text-sm font-semibold text-amber-700">
-                        {displayText(asNumber(product.quantity))}
-                        <span className="font-normal text-muted-foreground">
-                          {" "}
-                          / {displayText(asNumber(product.minimum_quantity))} min
-                        </span>
-                      </p>
-                    </div>
-                  ))}
-                  {lowStock.length > 6 && (
-                    <p className="pt-3 text-xs text-muted-foreground">+{lowStock.length - 6} more in Products</p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <PurchasesChart purchases={purchases} loading={loading} />
-        </div>
-
-        <div className="flex flex-col gap-4">
+      <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+        <PurchasesChart purchases={purchases} loading={loading} />
+        <div className="flex flex-col gap-6">
           <StockHealth
             loading={loading}
-            failed={!loading && products == null}
+            failed={productsFailed}
             total={stockStats.total}
             healthy={stockStats.healthy}
           />
           <QuickActions />
-          <RecentActivity purchases={purchases} loading={loading} />
         </div>
       </div>
-    </div>
+
+      <RecentActivity purchases={purchases} loading={loading} />
+    </PageRoot>
   )
 }

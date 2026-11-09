@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -9,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { editProduct, getAllProductCategories } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { displayText } from "@/lib/display"
+import { notifyError } from "@/lib/notify"
 import { DISCOUNT_TYPE, UNIT_OF_MEASUREMENT, type Product, type ProductCategory } from "@/lib/types"
 
 export function EditProductDialog({
@@ -27,7 +29,6 @@ export function EditProductDialog({
     minimum_quantity: "", retail_price: "", discount_type: "not_selected", recommended_discount: "0",
   })
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
 
   useEffect(() => {
     if (!product || !session) return
@@ -35,7 +36,6 @@ export function EditProductDialog({
       .then((data) => {
         const list = data as ProductCategory[]
         setCategories(list)
-        // fall back to matching by category name if the API doesn't send the id
         const byName = list.find((c) => c.category_name === product.category)?.id
         const catId = product.product_category_id ?? byName
         setForm((f) => ({ ...f, product_category_id: catId != null ? String(catId) : f.product_category_id }))
@@ -51,7 +51,6 @@ export function EditProductDialog({
       discount_type: product.discount_type ?? "not_selected",
       recommended_discount: product.recommended_discount != null ? String(product.recommended_discount) : "0",
     }))
-    setError("")
   }, [product, session])
 
   const set = (key: keyof typeof form) => (value: string) => setForm((f) => ({ ...f, [key]: value }))
@@ -59,16 +58,16 @@ export function EditProductDialog({
   async function save() {
     if (!session || !product) return
     setLoading(true)
-    setError("")
     try {
       await editProduct(
         { product_id: product.id, ...form, product_category_id: Number(form.product_category_id), supplier_id: Number(form.supplier_id) },
         session.token,
       )
+      toast.success("Product updated")
       onSaved()
       onClose()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't save the product.")
+      notifyError(e, "Couldn't save the product.")
     } finally {
       setLoading(false)
     }
@@ -134,7 +133,6 @@ export function EditProductDialog({
             <Input type="number" value={form.recommended_discount} onChange={(e) => set("recommended_discount")(e.target.value)} />
           </div>
         </div>
-        {error && <p className="text-sm font-medium text-destructive">{error}</p>}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={loading || !canSave}>{loading ? "Saving…" : "Save changes"}</Button>

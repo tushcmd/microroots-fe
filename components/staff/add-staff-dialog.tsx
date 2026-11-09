@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Plus } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,25 +17,25 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createStaffProfile } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { notifyError } from "@/lib/notify"
 
 export function AddStaffDialog({ onCreated }: { onCreated?: () => void }) {
   const { session } = useAuth()
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
 
   async function handleCreate() {
     if (!session) return
     setLoading(true)
-    setError("")
     try {
       await createStaffProfile(email, session.token)
+      toast.success("Staff account created. Credentials were emailed.")
       setOpen(false)
       setEmail("")
       onCreated?.()
-    } catch {
-      setError("Couldn't create the account. Check the email and try again.")
+    } catch (e) {
+      notifyError(e, "Couldn't create the account. Check the email and try again.")
     } finally {
       setLoading(false)
     }
@@ -61,7 +62,6 @@ export function AddStaffDialog({ onCreated }: { onCreated?: () => void }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>

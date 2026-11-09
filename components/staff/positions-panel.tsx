@@ -1,9 +1,8 @@
 "use client"
 
-
-import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { useEffect, useState } from "react"
 import { Pencil, Plus, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -21,7 +20,9 @@ import { Label } from "@/components/ui/label"
 import { createStaffPosition, deleteStaffPosition, getAllStaffPositions } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { displayText } from "@/lib/display"
+import { notifyError } from "@/lib/notify"
 import type { StaffPosition } from "@/lib/types"
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 
 export function PositionsPanel() {
   const { session } = useAuth()
@@ -30,7 +31,6 @@ export function PositionsPanel() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
   const [editing, setEditing] = useState<StaffPosition | null>(null)
   const [deleting, setDeleting] = useState<StaffPosition | null>(null)
 
@@ -46,15 +46,15 @@ export function PositionsPanel() {
   async function handleCreate() {
     if (!session) return
     setLoading(true)
-    setError("")
     try {
       await createStaffPosition({ position_title: title, position_description: description }, session.token)
+      toast.success("Position added")
       setOpen(false)
       setTitle("")
       setDescription("")
       refresh()
-    } catch {
-      setError("Couldn't create the position.")
+    } catch (e) {
+      notifyError(e, "Couldn't create the position.")
     } finally {
       setLoading(false)
     }
@@ -90,7 +90,6 @@ export function PositionsPanel() {
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-sm font-medium text-destructive">{error}</p>}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>
@@ -109,10 +108,6 @@ export function PositionsPanel() {
             <p className="py-6 text-center text-sm text-muted-foreground">No positions yet.</p>
           )}
           {positions.map((position) => (
-            // <div key={position.id} className="py-3">
-            //   <p className="text-sm font-medium">{displayText(position.position_title)}</p>
-            //   <p className="text-xs text-muted-foreground">{displayText(position.position_description)}</p>
-            // </div>
             <div key={position.id} className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-medium">{displayText(position.position_title)}</p>
@@ -138,6 +133,7 @@ export function PositionsPanel() {
           onConfirm={async () => {
             if (!deleting || !session) return
             await deleteStaffPosition(deleting.id, session.token)
+            toast.success("Position deleted")
             refresh()
           }}
         />

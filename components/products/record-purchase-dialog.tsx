@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Plus } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { addStockPurchase } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { displayText } from "@/lib/display"
+import { notifyError } from "@/lib/notify"
 import type { Product } from "@/lib/types"
 
 export function RecordPurchaseDialog({
@@ -33,24 +35,23 @@ export function RecordPurchaseDialog({
   const [quantity, setQuantity] = useState("")
   const [unitCost, setUnitCost] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
 
   async function handleSubmit() {
     if (!session) return
     setLoading(true)
-    setError("")
     try {
       await addStockPurchase(
         { product_id: Number(productId), quantity, stock_price_per_unit: unitCost },
         session.token,
       )
+      toast.success("Purchase recorded")
       setOpen(false)
       setProductId("")
       setQuantity("")
       setUnitCost("")
       onRecorded?.()
-    } catch {
-      setError("Couldn't record the purchase. Check the fields and try again.")
+    } catch (e) {
+      notifyError(e, "Couldn't record the purchase. Check the fields and try again.")
     } finally {
       setLoading(false)
     }
@@ -94,7 +95,6 @@ export function RecordPurchaseDialog({
               <Input type="number" placeholder="560" value={unitCost} onChange={(e) => setUnitCost(e.target.value)} />
             </div>
           </div>
-          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>

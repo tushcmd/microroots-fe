@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Plus } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { addProduct, getAllProductCategories } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { displayText } from "@/lib/display"
+import { notifyError } from "@/lib/notify"
 import { DISCOUNT_TYPE, UNIT_OF_MEASUREMENT, type ProductCategory } from "@/lib/types"
 
 const emptyForm = {
@@ -38,7 +40,6 @@ export function AddProductDialog({ onCreated }: { onCreated?: () => void }) {
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
 
   useEffect(() => {
     if (!open || !session) return
@@ -54,7 +55,6 @@ export function AddProductDialog({ onCreated }: { onCreated?: () => void }) {
   async function handleSubmit() {
     if (!session) return
     setLoading(true)
-    setError("")
     try {
       await addProduct(
         {
@@ -70,11 +70,12 @@ export function AddProductDialog({ onCreated }: { onCreated?: () => void }) {
         },
         session.token,
       )
+      toast.success("Product added")
       setOpen(false)
       setForm(emptyForm)
       onCreated?.()
-    } catch {
-      setError("Couldn't add the product. Check the fields and try again.")
+    } catch (e) {
+      notifyError(e, "Couldn't add the product. Check the fields and try again.")
     } finally {
       setLoading(false)
     }
@@ -207,8 +208,6 @@ export function AddProductDialog({ onCreated }: { onCreated?: () => void }) {
             />
           </div>
         </div>
-
-        {error && <p className="text-sm font-medium text-destructive">{error}</p>}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>

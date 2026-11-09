@@ -2,17 +2,23 @@
 
 import { useEffect, useState } from "react"
 import { X } from "lucide-react"
+import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { editStaffRoles, getAllAvailableRoles, getStaffRoles } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { notifyError } from "@/lib/notify"
 import type { Role, RoleInstance } from "@/lib/types"
 
 type Row = { roleId: number; title: string; subRoles: string[] }
 
 export function StaffRolesEditor({ staffId }: { staffId: number }) {
+  return <StaffRolesEditorInner key={staffId} staffId={staffId} />
+}
+
+function StaffRolesEditorInner({ staffId }: { staffId: number }) {
   const { session } = useAuth()
   const [roles, setRoles] = useState<Role[]>([])
   const [rows, setRows] = useState<Row[]>([])
@@ -21,15 +27,10 @@ export function StaffRolesEditor({ staffId }: { staffId: number }) {
   const [roleId, setRoleId] = useState("")
   const [subRole, setSubRole] = useState("")
   const [saving, setSaving] = useState(false)
-  const [status, setStatus] = useState("")
 
   useEffect(() => {
     if (!session) return
     let cancelled = false
-    setLoaded(false)
-    setLoadError("")
-    setStatus("")
-    setRows([])
     Promise.all([getStaffRoles(staffId, session.token), getAllAvailableRoles(session.token)])
       .then(([instances, available]) => {
         if (cancelled) return
@@ -50,7 +51,10 @@ export function StaffRolesEditor({ staffId }: { staffId: number }) {
         setLoaded(true)
       })
       .catch((e) => {
-        if (!cancelled) setLoadError(e instanceof Error ? e.message : "Couldn't load roles.")
+        if (!cancelled) {
+          setLoadError(e instanceof Error ? e.message : "Couldn't load roles.")
+          setLoaded(true)
+        }
       })
     return () => {
       cancelled = true
@@ -71,7 +75,6 @@ export function StaffRolesEditor({ staffId }: { staffId: number }) {
       return [...prev, { roleId: id, title, subRoles: [n] }]
     })
     setSubRole("")
-    setStatus("")
   }
 
   function removeSubRole(id: number, n: string) {
@@ -80,22 +83,20 @@ export function StaffRolesEditor({ staffId }: { staffId: number }) {
         .map((r) => (r.roleId === id ? { ...r, subRoles: r.subRoles.filter((s) => s !== n) } : r))
         .filter((r) => r.subRoles.length > 0),
     )
-    setStatus("")
   }
 
   async function save() {
     if (!session) return
     setSaving(true)
-    setStatus("")
     try {
       await editStaffRoles(
         staffId,
         rows.map((r) => ({ role_id: r.roleId, sub_role_numbers: r.subRoles })),
         session.token,
       )
-      setStatus("Roles updated.")
+      toast.success("Roles updated")
     } catch (e) {
-      setStatus(e instanceof Error ? e.message : "Couldn't save roles.")
+      notifyError(e, "Couldn't save roles.")
     } finally {
       setSaving(false)
     }
@@ -154,7 +155,6 @@ export function StaffRolesEditor({ staffId }: { staffId: number }) {
           <p className="text-xs text-muted-foreground">
             Saving replaces all of this person&apos;s roles with the list above.
           </p>
-          {status && <p className="text-sm text-muted-foreground">{status}</p>}
           <Button onClick={save} disabled={saving}>
             {saving ? "Saving…" : "Save roles"}
           </Button>

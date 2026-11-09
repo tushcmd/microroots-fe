@@ -33,3 +33,10 @@ export function formatKes(value: number | string | null | undefined) {
   const n = asNumber(value)
   return n == null ? "—" : `KES ${n.toLocaleString()}`
 }
+
+export function formatDate(value: string | null | undefined): string {
+  if (!value) return "—"
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return "—"
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+}
