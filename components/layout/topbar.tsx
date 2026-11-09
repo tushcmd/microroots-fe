@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { staffLogout } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { displayInitials, displayText } from "@/lib/display"
 
@@ -22,14 +21,6 @@ export function Topbar({ title, onMenuClick }: { title: string; onMenuClick: () 
 
   const displayName = displayText(session.name, "Staff")
   const initials = displayInitials(session.name?.split(" ")[0], session.name?.split(" ")[1], displayName)
-
-  async function handleSignOut() {
-    try {
-      await staffLogout(session!.token)
-    } finally {
-      logout()
-    }
-  }
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/90 px-5 backdrop-blur sm:px-8">
@@ -58,7 +49,7 @@ export function Topbar({ title, onMenuClick }: { title: string; onMenuClick: () 
             <UserCog /> Profile settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleSignOut}>
+          <DropdownMenuItem onClick={logout}>
             <LogOut /> Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>

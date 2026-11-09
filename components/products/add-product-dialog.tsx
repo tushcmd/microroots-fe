@@ -43,7 +43,7 @@ export function AddProductDialog({ onCreated }: { onCreated?: () => void }) {
 
   useEffect(() => {
     if (!open || !session) return
-    getAllProductCategories(session.token)
+    getAllProductCategories()
       .then((data) => setCategories(data as ProductCategory[]))
       .catch(() => setCategories([]))
   }, [open, session])
@@ -68,7 +68,6 @@ export function AddProductDialog({ onCreated }: { onCreated?: () => void }) {
           recommended_discount: form.recommended_discount,
           quantity: form.quantity,
         },
-        session.token,
       )
       toast.success("Product added")
       setOpen(false)

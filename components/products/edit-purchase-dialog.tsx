@@ -50,7 +50,6 @@ export function EditPurchaseDialog({
           quantity,
           stock_price_per_unit: unitCost,
         },
-        session.token,
       )
       toast.success("Purchase updated")
       onSaved()

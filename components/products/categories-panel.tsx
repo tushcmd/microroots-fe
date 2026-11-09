@@ -34,7 +34,7 @@ export function CategoriesPanel() {
 
   function refresh() {
     if (!session) return
-    getAllProductCategories(session.token)
+    getAllProductCategories()
       .then((data) => setCategories(data as ProductCategory[]))
       .catch(() => setCategories([]))
   }
@@ -45,7 +45,7 @@ export function CategoriesPanel() {
     if (!session) return
     setLoading(true)
     try {
-      await addProductCategory({ category_name: name, description }, session.token)
+      await addProductCategory({ category_name: name, description })
       toast.success("Category added")
       setOpen(false)
       setName("")
@@ -121,7 +121,7 @@ export function CategoriesPanel() {
           description="Products in this category may be affected."
           onConfirm={async () => {
             if (!session || !deleting) return
-            await deleteProductCategory(deleting.id, session.token)
+            await deleteProductCategory(deleting.id)
             toast.success("Category deleted")
             refresh()
           }}

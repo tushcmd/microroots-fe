@@ -24,13 +24,8 @@ export function LoginForm() {
     setError("")
     setLoading(true)
     try {
-      const data = await staffLogin(staffNumber, password)
-      login({
-        name: data.full_name,
-        role: data.user_role,
-        token: data.user_token,
-        staffNumber: staffNumber.trim(),
-      })
+      const session = await staffLogin(staffNumber, password)
+      login(session)
       toast.success("Signed in")
       router.push("/dashboard")
     } catch (err) {

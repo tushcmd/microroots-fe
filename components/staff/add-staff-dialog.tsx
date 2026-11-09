@@ -29,7 +29,7 @@ export function AddStaffDialog({ onCreated }: { onCreated?: () => void }) {
     if (!session) return
     setLoading(true)
     try {
-      await createStaffProfile(email, session.token)
+      await createStaffProfile(email)
       toast.success("Staff account created. Credentials were emailed.")
       setOpen(false)
       setEmail("")

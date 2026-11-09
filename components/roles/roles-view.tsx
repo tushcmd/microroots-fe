@@ -14,7 +14,7 @@ export function RolesView() {
 
   useEffect(() => {
     if (!session) return
-    getAllAvailableRoles(session.token)
+    getAllAvailableRoles()
       .then((data) => setRoles(data as Role[]))
       .catch(() => setRoles([]))
   }, [session])

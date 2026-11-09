@@ -36,7 +36,7 @@ export function PositionsPanel() {
 
   function refresh() {
     if (!session) return
-    getAllStaffPositions(session.token)
+    getAllStaffPositions()
       .then((data) => setPositions(data as StaffPosition[]))
       .catch(() => setPositions([]))
   }
@@ -47,7 +47,7 @@ export function PositionsPanel() {
     if (!session) return
     setLoading(true)
     try {
-      await createStaffPosition({ position_title: title, position_description: description }, session.token)
+      await createStaffPosition({ position_title: title, position_description: description })
       toast.success("Position added")
       setOpen(false)
       setTitle("")
@@ -132,7 +132,7 @@ export function PositionsPanel() {
           description="Staff already holding this position keep their profile but lose the position."
           onConfirm={async () => {
             if (!deleting || !session) return
-            await deleteStaffPosition(deleting.id, session.token)
+            await deleteStaffPosition(deleting.id)
             toast.success("Position deleted")
             refresh()
           }}

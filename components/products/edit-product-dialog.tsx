@@ -32,7 +32,7 @@ export function EditProductDialog({
 
   useEffect(() => {
     if (!product || !session) return
-    getAllProductCategories(session.token)
+    getAllProductCategories()
       .then((data) => {
         const list = data as ProductCategory[]
         setCategories(list)
@@ -61,7 +61,6 @@ export function EditProductDialog({
     try {
       await editProduct(
         { product_id: product.id, ...form, product_category_id: Number(form.product_category_id), supplier_id: Number(form.supplier_id) },
-        session.token,
       )
       toast.success("Product updated")
       onSaved()
