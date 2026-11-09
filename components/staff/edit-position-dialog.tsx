@@ -28,7 +28,7 @@ function EditPositionForm({
     if (!session) return
     setLoading(true)
     try {
-      await editStaffPosition({ staff_position_id: position.id, staff_position_name: name.trim() }, session.token)
+      await editStaffPosition({ staff_position_id: position.id, staff_position_name: name.trim() })
       toast.success("Position updated")
       onSaved()
       onClose()

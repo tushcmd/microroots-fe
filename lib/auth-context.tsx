@@ -1,70 +1,73 @@
 "use client"
 
-import { createContext, useCallback, useContext, useSyncExternalStore, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
 import type { Session } from "./types"
-
-const STORAGE_KEY = "microroots_session"
+import { getSession, staffLogout, setAuthExpiredHandler } from "./api"
 
 interface AuthContextValue {
   session: Session | null
   isLoading: boolean
   login: (session: Session) => void
   logout: () => void
+  refresh: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-let listeners: Array<() => void> = []
-
-function emit() {
-  for (const l of listeners) l()
-}
-
-function subscribe(listener: () => void) {
-  listeners = [...listeners, listener]
-  return () => {
-    listeners = listeners.filter((l) => l !== listener)
-  }
-}
-
-function getSnapshot(): string | null {
-  if (typeof window === "undefined") return null
-  try {
-    return window.localStorage.getItem(STORAGE_KEY)
-  } catch {
-    return null
-  }
-}
-
-function getServerSnapshot(): string | null {
-  return null
-}
-
-function parseSession(raw: string | null): Session | null {
-  if (!raw) return null
-  try {
-    return JSON.parse(raw) as Session
-  } catch {
-    return null
-  }
-}
+const OLD_KEYS = ["microroots_session", "microroots.session"]
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
-  const session = parseSession(raw)
+  const [session, setSession] = useState<Session | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
-  const login = useCallback((next: Session) => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-    emit()
+  const refresh = useCallback(async () => {
+    const s = await getSession()
+    setSession(s)
   }, [])
 
   const logout = useCallback(() => {
-    window.localStorage.removeItem(STORAGE_KEY)
-    emit()
+    setSession(null)
+    void staffLogout().finally(() => {
+      router.replace("/login")
+      router.refresh()
+    })
+  }, [router])
+
+  useEffect(() => {
+    for (const k of OLD_KEYS) {
+      try {
+        window.localStorage.removeItem(k)
+      } catch {}
+    }
+    let cancelled = false
+    ;(async () => {
+      const s = await getSession()
+      if (!cancelled) {
+        setSession(s)
+        setIsLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    setAuthExpiredHandler(() => {
+      setSession(null)
+      router.replace("/login")
+    })
+    return () => setAuthExpiredHandler(null)
+  }, [router])
+
+  const login = useCallback((next: Session) => {
+    setSession(next)
   }, [])
 
   return (
-    <AuthContext.Provider value={{ session, isLoading: false, login, logout }}>
+    <AuthContext.Provider value={{ session, isLoading, login, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   )

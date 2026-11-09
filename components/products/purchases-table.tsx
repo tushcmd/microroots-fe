@@ -85,7 +85,7 @@ export function PurchasesTable({
         description="This removes the purchase record and reverses its quantity in the product's stock."
         onConfirm={async () => {
           if (!session || !deleting) return
-          await deleteStockPurchase(deleting.id, session.token)
+          await deleteStockPurchase(deleting.id)
           toast.success("Purchase deleted")
           onChanged()
         }}

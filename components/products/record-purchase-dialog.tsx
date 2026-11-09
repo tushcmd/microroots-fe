@@ -42,7 +42,6 @@ export function RecordPurchaseDialog({
     try {
       await addStockPurchase(
         { product_id: Number(productId), quantity, stock_price_per_unit: unitCost },
-        session.token,
       )
       toast.success("Purchase recorded")
       setOpen(false)

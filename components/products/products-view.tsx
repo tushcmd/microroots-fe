@@ -19,14 +19,14 @@ export function ProductsView() {
 
   const refreshProducts = useCallback(() => {
     if (!session) return
-    getAllProducts(session.token)
+    getAllProducts()
       .then((data) => setProducts(data as Product[]))
       .catch(() => setProducts([]))
   }, [session])
 
   const refreshPurchases = useCallback(() => {
     if (!session) return
-    getAllStockPurchases(session.token)
+    getAllStockPurchases()
       .then((data) => setPurchases(data as StockPurchase[]))
       .catch(() => setPurchases([]))
   }, [session])

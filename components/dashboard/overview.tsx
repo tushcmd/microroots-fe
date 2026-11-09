@@ -16,7 +16,6 @@ import { StockHealth } from "./stock-health"
 
 export function DashboardOverview() {
   const { session } = useAuth()
-  const token = session?.token
   const firstName = session?.name?.split(" ")[0] || "there"
 
   const [staff, setStaff] = useState<StaffProfile[] | null>(null)
@@ -34,11 +33,11 @@ export function DashboardOverview() {
   }, [])
 
   const loadAll = useCallback(() => {
-    if (!token) return Promise.resolve()
+    if (!session) return Promise.resolve()
     return Promise.allSettled([
-      getAllStaffProfiles(token),
-      getAllProducts(token),
-      getAllStockPurchases(token),
+      getAllStaffProfiles(),
+      getAllProducts(),
+      getAllStockPurchases(),
     ]).then(([s, p, pu]) => {
       if (!mountedRef.current) return
       setStaff(s.status === "fulfilled" ? (s.value as StaffProfile[]) : null)
@@ -52,7 +51,7 @@ export function DashboardOverview() {
       setPurchases(pu.status === "fulfilled" ? (pu.value as StockPurchase[]) : null)
       setLoading(false)
     })
-  }, [token])
+  }, [session])
 
   useEffect(() => {
     loadAll()

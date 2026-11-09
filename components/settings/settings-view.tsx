@@ -65,7 +65,7 @@ export function SettingsView() {
     }
     setLoading(true)
     try {
-      await changeMyStaffPassword(password, session.token)
+      await changeMyStaffPassword(password)
       toast.success("Password changed. Please sign in again.")
       logout()
     } catch (e) {

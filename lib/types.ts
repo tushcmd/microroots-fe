@@ -1,7 +1,7 @@
 export interface Session {
   name: string | null
   role: string | null
-  token: string
+  staffNumber?: string
 }
 
 export interface StaffPosition {
@@ -72,13 +72,6 @@ export interface RoleInstance {
   id: number
   role: { id: number; role_title: string | null; role_number: string | null } | null
   sub_role: { role_number: string | number | null } | null
-}
-
-export interface Session {
-  name: string | null
-  role: string | null
-  token: string
-  staffNumber?: string
 }
 
 export interface StaffImage {

@@ -1,8 +1,7 @@
-// Base API client for the MicroRootsKe backend.
-// Swap NEXT_PUBLIC_API_URL per environment rather than editing this file.
+"use client"
 
-// const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://169.58.210.23"
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://169.58.210.23"
+// Browser-side API client. Calls same-origin Next.js routes which proxy to Django.
+// The auth token lives in an httpOnly cookie and is never exposed to JS.
 
 export interface ApiResponse<T> {
   message: string
@@ -18,46 +17,75 @@ export class ApiError extends Error {
   }
 }
 
+type AuthHandler = (() => void) | null
+let onAuthExpired: AuthHandler = null
+
+export function setAuthExpiredHandler(handler: AuthHandler) {
+  onAuthExpired = handler
+}
+
+function detailOf(body: unknown): string | undefined {
+  if (body && typeof body === "object" && "detail" in body) {
+    const d = (body as { detail?: unknown }).detail
+    return typeof d === "string" ? d : undefined
+  }
+  return undefined
+}
+
+function isInvalidTokenDetail(body: unknown): boolean {
+  const detail = detailOf(body)
+  return (
+    detail === "Invalid token." ||
+    detail === "Authentication credentials were not provided."
+  )
+}
+
 async function apiCall<T>(
   endpoint: string,
-  options: RequestInit & { token?: string } = {},
+  options: RequestInit = {},
 ): Promise<ApiResponse<T>> {
-  const { token, ...init } = options
-  const url = `${BASE_URL}${endpoint}`
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(init.headers as Record<string, string> | undefined),
+  const init = { ...options }
+  const headers = new Headers(init.headers || {})
+  if (!(init.body instanceof FormData) && init.body != null && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json")
   }
-
-  if (token) {
-    headers.Authorization = `Token ${token}`
-  }
+  init.headers = headers
+  init.credentials = "same-origin"
+  init.cache = "no-store"
 
   let response: Response
   try {
-    response = await fetch(url, { ...init, headers })
+    response = await fetch(`/api/proxy${endpoint}`, init)
   } catch {
-    // Network-level failure (timeout, DNS, connection refused) never reaches
-    // the JSON branch below, so it needs its own typed error.
     throw new ApiError("Unable to reach the server. Check your connection.", 0)
   }
 
-  if (!response.ok) {
-    const contentType = response.headers.get("content-type")
-    let message = response.statusText
-    if (contentType?.includes("application/json")) {
-      try {
-        const body = await response.json()
-        message = typeof body?.message === "string" ? body.message : message
-      } catch {
-        // fall through to statusText
-      }
+  const contentType = response.headers.get("content-type") || ""
+  const text = await response.text()
+  let json: unknown = null
+  if (contentType.includes("application/json") && text) {
+    try {
+      json = JSON.parse(text)
+    } catch {
+      json = null
     }
-    throw new ApiError(message, response.status)
   }
 
-  return (await response.json()) as ApiResponse<T>
+  if (!response.ok) {
+    if (response.status === 502) {
+      throw new ApiError("Unable to reach the server. Check your connection.", 0)
+    }
+    const msg = json && typeof json === "object" && "message" in json && typeof (json as { message?: unknown }).message === "string"
+      ? (json as { message: string }).message
+      : undefined
+    if (response.status === 401 && (isInvalidTokenDetail(json) || msg === "Not signed in" || text === "Not signed in")) {
+      onAuthExpired?.()
+      throw new ApiError("Session expired", 401)
+    }
+    throw new ApiError(msg || response.statusText, response.status)
+  }
+
+  return (json ?? {}) as ApiResponse<T>
 }
 
 function asList<T>(res: ApiResponse<unknown>, keys: string[] = []): T[] {
@@ -84,6 +112,38 @@ function asFlag(res: ApiResponse<unknown>, key: string) {
   return false
 }
 
+async function authJson<T>(path: string, body: unknown): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      credentials: "same-origin",
+      cache: "no-store",
+    })
+  } catch {
+    throw new ApiError("Unable to reach the server. Check your connection.", 0)
+  }
+  const text = await response.text()
+  let json: unknown = null
+  try {
+    json = text ? JSON.parse(text) : null
+  } catch {
+    json = null
+  }
+  if (!response.ok) {
+    if (response.status === 502) {
+      throw new ApiError("Unable to reach the server. Check your connection.", 0)
+    }
+    const msg = json && typeof json === "object" && "message" in json && typeof (json as { message?: unknown }).message === "string"
+      ? (json as { message: string }).message
+      : response.statusText
+    throw new ApiError(msg, response.status)
+  }
+  return json as T
+}
+
 // --- Setup (first-run admin) ---------------------------------------------
 
 export async function checkAdminProfile(): Promise<boolean> {
@@ -103,173 +163,151 @@ export async function createAdminProfile(username: string): Promise<void> {
 export async function staffLogin(
   staff_number: string,
   password: string,
-): Promise<{ user_token: string; full_name: string | null; user_role: string | null }> {
-  const res = await apiCall<{ user_token: string; full_name: string | null; user_role: string | null }>(
-    "/staff-profile/staff-login/",
-    { method: "POST", body: JSON.stringify({ staff_number, password }) },
-  )
-  if (!res.payload?.user_token) throw new ApiError("Malformed login response", 500)
-  return res.payload
+): Promise<{ name: string | null; role: string | null; staffNumber?: string }> {
+  return authJson("/api/auth/login", { staff_number, password })
 }
 
-export async function staffLogout(token: string): Promise<void> {
-  await apiCall("/staff-profile/staff-logout/", { method: "POST", token })
+export async function staffLogout(): Promise<void> {
+  try {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin", cache: "no-store" })
+  } catch {
+    // ignore
+  }
+}
+
+export async function getSession(): Promise<{ name: string | null; role: string | null; staffNumber?: string } | null> {
+  try {
+    const res = await fetch("/api/auth/session", { credentials: "same-origin", cache: "no-store" })
+    if (!res.ok) return null
+    return res.json() as Promise<{ name: string | null; role: string | null; staffNumber?: string }>
+  } catch {
+    return null
+  }
 }
 
 // --- Staff profiles -----------------------------------------------------
 
-export async function getAllStaffProfiles(token: string) {
-  const res = await apiCall<unknown>("/staff-profile/get-all-staff-profiles/", { token })
+export async function getAllStaffProfiles() {
+  const res = await apiCall<unknown>("/staff-profile/get-all-staff-profiles/")
   return asList(res, ["staff_profiles", "profiles"])
 }
 
-export async function createStaffProfile(email: string, token: string): Promise<void> {
+export async function createStaffProfile(email: string): Promise<void> {
   await apiCall("/staff-profile/create-staff-profile/", {
     method: "POST",
     body: JSON.stringify({ username: email }),
-    token,
   })
 }
 
-export async function getAllStaffPositions(token: string) {
-  const res = await apiCall<unknown>("/staff-profile/get-all-staff-positions/", { token })
+export async function getAllStaffPositions() {
+  const res = await apiCall<unknown>("/staff-profile/get-all-staff-positions/")
   return asList(res, ["staff_positions", "positions"])
 }
 
-export async function createStaffPosition(
-  data: { position_title: string; position_description: string },
-  token: string,
-): Promise<void> {
+export async function createStaffPosition(data: { position_title: string; position_description: string }): Promise<void> {
   await apiCall("/staff-profile/create-staff-position/", {
     method: "POST",
     body: JSON.stringify(data),
-    token,
   })
 }
 
 export async function updateStaffPosition(
   data: { position_id: number; position_title: string; position_description: string },
-  token: string,
 ): Promise<void> {
   await apiCall("/staff-profile/update-staff-position/", {
     method: "POST",
     body: JSON.stringify(data),
-    token,
   })
 }
 
-// Partial update — pass only the fields you want to change, plus staff_profile_id.
-export async function updateStaffProfile(
-  data: { staff_profile_id: number } & Record<string, unknown>,
-  token: string,
-): Promise<void> {
+export async function updateStaffProfile(data: { staff_profile_id: number } & Record<string, unknown>): Promise<void> {
   await apiCall("/staff-profile/update-staff-profile/", {
     method: "POST",
     body: JSON.stringify(data),
-    token,
   })
 }
 
-export async function changeMyStaffPassword(password: string, token: string): Promise<void> {
+export async function changeMyStaffPassword(password: string): Promise<void> {
   await apiCall("/staff-profile/change-my-staff-password/", {
     method: "POST",
     body: JSON.stringify({ password }),
-    token,
   })
 }
 
-export async function getAllAvailableRoles(token: string) {
-  const res = await apiCall<unknown>("/staff-profile/get-all-available-roles/", { token })
+export async function getAllAvailableRoles() {
+  const res = await apiCall<unknown>("/staff-profile/get-all-available-roles/")
   return asList(res, ["roles", "available_roles"])
 }
 
 // --- Products & inventory -------------------------------------------------
 
-export async function getAllProducts(token: string) {
-  const res = await apiCall<unknown>("/products/get-all-products/", { token })
+export async function getAllProducts() {
+  const res = await apiCall<unknown>("/products/get-all-products/")
   return asList(res, ["products"])
 }
 
-export async function addProduct(
-  productData: {
-    product_category_id: number
-    supplier_id: number
-    product_name: string
-    unit_of_measurement: string
-    minimum_quantity: string
-    retail_price: string
-    discount_type: string
-    recommended_discount: string
-    quantity: string
-  },
-  token: string,
-): Promise<void> {
+export async function addProduct(productData: {
+  product_category_id: number
+  supplier_id: number
+  product_name: string
+  unit_of_measurement: string
+  minimum_quantity: string
+  retail_price: string
+  discount_type: string
+  recommended_discount: string
+  quantity: string
+}): Promise<void> {
   await apiCall("/products/add-product/", {
     method: "POST",
     body: JSON.stringify(productData),
-    token,
   })
 }
 
-export async function getAllStockPurchases(token: string) {
-  const res = await apiCall<unknown>("/products/get-all-stock-purchase-inventories/", { token })
+export async function getAllStockPurchases() {
+  const res = await apiCall<unknown>("/products/get-all-stock-purchase-inventories/")
   return asList(res, ["stock_purchase_inventories"])
 }
 
-export async function addStockPurchase(
-  data: { product_id: number; quantity: string; stock_price_per_unit: string },
-  token: string,
-): Promise<void> {
+export async function addStockPurchase(data: { product_id: number; quantity: string; stock_price_per_unit: string }): Promise<void> {
   await apiCall("/products/add-stock-purchase-inventory/", {
     method: "POST",
     body: JSON.stringify(data),
-    token,
   })
 }
 
-export async function getAllProductCategories(token: string) {
-  const res = await apiCall<unknown>("/products/get-all-product-categories/", { token })
+export async function getAllProductCategories() {
+  const res = await apiCall<unknown>("/products/get-all-product-categories/")
   return asList(res, ["product_categories"])
 }
 
-export async function addProductCategory(
-  data: { category_name: string; description: string },
-  token: string,
-): Promise<void> {
+export async function addProductCategory(data: { category_name: string; description: string }): Promise<void> {
   await apiCall("/products/add-product-category/", {
     method: "POST",
     body: JSON.stringify(data),
-    token,
   })
 }
 
-export async function deleteProductCategory(
-  product_category_id: number,
-  token: string,
-): Promise<void> {
+export async function deleteProductCategory(product_category_id: number): Promise<void> {
   await apiCall("/products/delete-single-product-category/", {
     method: "POST",
     body: JSON.stringify({ product_category_id }),
-    token,
   })
 }
 
-
 // --- Staff: delete + roles ------------------------------------------------
 
-export async function deleteStaffProfile(id: number, token: string): Promise<void> {
-  await apiCall(`/staff-profile/delete-staff-profile/${id}/`, { method: "DELETE", token })
+export async function deleteStaffProfile(id: number): Promise<void> {
+  await apiCall(`/staff-profile/delete-staff-profile/${id}/`, { method: "DELETE" })
 }
 
-export async function deleteStaffPosition(id: number, token: string): Promise<void> {
-  await apiCall(`/staff-profile/delete-staff-position/${id}/`, { method: "DELETE", token })
+export async function deleteStaffPosition(id: number): Promise<void> {
+  await apiCall(`/staff-profile/delete-staff-position/${id}/`, { method: "DELETE" })
 }
 
-export async function getStaffRoles(staff_profile_id: number, token: string) {
+export async function getStaffRoles(staff_profile_id: number) {
   const res = await apiCall<unknown>("/staff-profile/get-this-staff-roles/", {
     method: "POST",
     body: JSON.stringify({ staff_profile_id }),
-    token,
   })
   return asList(res, ["roles", "role_instances"])
 }
@@ -277,112 +315,104 @@ export async function getStaffRoles(staff_profile_id: number, token: string) {
 export async function editStaffRoles(
   staff_profile_id: number,
   role_instance_list: { role_id: number; sub_role_numbers: string[] }[],
-  token: string,
 ): Promise<void> {
   await apiCall("/staff-profile/edit-staff-roles/", {
     method: "POST",
     body: JSON.stringify({ staff_profile_id, role_instance_list }),
-    token,
   })
 }
 
 // --- Products: edit + delete ---------------------------------------------
 
-export async function editProduct(
-  data: {
-    product_id: number
-    product_category_id: number
-    supplier_id: number
-    product_name: string
-    unit_of_measurement: string
-    minimum_quantity: string
-    retail_price: string
-    discount_type: string
-    recommended_discount: string
-  },
-  token: string,
-): Promise<void> {
-  await apiCall("/products/edit-single-product/", { method: "POST", body: JSON.stringify(data), token })
+export async function editProduct(data: {
+  product_id: number
+  product_category_id: number
+  supplier_id: number
+  product_name: string
+  unit_of_measurement: string
+  minimum_quantity: string
+  retail_price: string
+  discount_type: string
+  recommended_discount: string
+}): Promise<void> {
+  await apiCall("/products/edit-single-product/", { method: "POST", body: JSON.stringify(data) })
 }
 
-export async function deleteProduct(product_id: number, token: string): Promise<void> {
+export async function deleteProduct(product_id: number): Promise<void> {
   await apiCall("/products/delete-single-product/", {
     method: "POST",
     body: JSON.stringify({ product_id }),
-    token,
   })
 }
 
-export async function editStockPurchase(
-  data: { stock_purchase_inventory_id: number; product_id: number; quantity: string; stock_price_per_unit: string },
-  token: string,
-): Promise<void> {
+export async function editStockPurchase(data: {
+  stock_purchase_inventory_id: number
+  product_id: number
+  quantity: string
+  stock_price_per_unit: string
+}): Promise<void> {
   await apiCall("/products/edit-single-stock-purchase-inventories/", {
     method: "POST",
     body: JSON.stringify(data),
-    token,
   })
 }
 
-export async function deleteStockPurchase(stock_purchase_inventory_id: number, token: string): Promise<void> {
+export async function deleteStockPurchase(stock_purchase_inventory_id: number): Promise<void> {
   await apiCall("/products/delete-single-stock-purchase-inventory/", {
     method: "POST",
     body: JSON.stringify({ stock_purchase_inventory_id }),
-    token,
   })
 }
 
 // --- Staff images ---------------------------------------------------------
 
-// export function mediaUrl(path: string) {
-//   return /^https?:\/\//.test(path) ? path : `${BASE_URL}${path}`
-// }
 export function mediaUrl(path: string) {
-  // Backend may return a relative path or an absolute URL pointing at its own
-  // internal host. Either way, serve it from the API host we actually reach.
+  const base = (process.env.NEXT_PUBLIC_MEDIA_URL || "http://169.58.210.23").replace(/\/+$/, "")
   try {
-    const { pathname } = new URL(path, BASE_URL)
-    return `${BASE_URL}${pathname}`
+    const { pathname } = new URL(path, base)
+    return `${base}${pathname}`
   } catch {
-    return `${BASE_URL}${path}`
+    return `${base}${path}`
   }
 }
 
-export async function getStaffImages(staff_profile_id: number, token: string) {
+export async function getStaffImages(staff_profile_id: number) {
   const res = await apiCall<unknown>("/staff-profile/get-all-staff-images/", {
     method: "POST",
     body: JSON.stringify({ staff_profile_id }),
-    token,
   })
   return asList<{ image_id: string; image_url: string }>(res, ["image_list"])
 }
 
-export async function addStaffImage(staff_profile_id: number, file: File, token: string): Promise<void> {
+export async function addStaffImage(staff_profile_id: number, file: File): Promise<void> {
   const form = new FormData()
   form.append("staff_profile_id", String(staff_profile_id))
   form.append("images", file)
 
   let response: Response
   try {
-    // No Content-Type header: the browser must set the multipart boundary itself.
-    response = await fetch(`${BASE_URL}/staff-profile/add-staff-image/`, {
+    response = await fetch("/api/proxy/staff-profile/add-staff-image/", {
       method: "POST",
-      headers: { Authorization: `Token ${token}` },
       body: form,
+      credentials: "same-origin",
+      cache: "no-store",
     })
   } catch {
+    throw new ApiError("Unable to reach the server. Check your connection.", 0)
+  }
+  if (response.status === 502) {
     throw new ApiError("Unable to reach the server. Check your connection.", 0)
   }
   if (!response.ok) throw new ApiError("Couldn't upload the photo.", response.status)
 }
 
-export async function deleteStaffImage(image_id: number, token: string): Promise<void> {
+export async function deleteStaffImage(image_id: number): Promise<void> {
   await apiCall("/staff-profile/delete-staff-image/", {
     method: "POST",
     body: JSON.stringify({ image_id }),
-    token,
   })
 }
+
 // Admin setup aliases (backward-compat with setup form naming)
 export async function createAdminAccount(data: {
   admin_number?: string
@@ -390,7 +420,6 @@ export async function createAdminAccount(data: {
   password?: string
   username?: string
 }): Promise<void> {
-  // try existing admin creation endpoint shape; adjust if backend differs
   await apiCall("/staff-profile/create-admin-profile/", {
     method: "POST",
     body: JSON.stringify({ username: data.username || data.admin_number || data.email_address }),
@@ -402,7 +431,6 @@ export async function editStaffPosition(
   data:
     | { position_id: number; position_title: string; position_description?: string }
     | { staff_position_id: number; staff_position_name: string },
-  token: string,
 ): Promise<void> {
   const payload =
     "staff_position_id" in data
@@ -412,5 +440,5 @@ export async function editStaffPosition(
           position_description: "",
         }
       : data
-  await updateStaffPosition(payload as { position_id: number; position_title: string; position_description: string }, token)
+  await updateStaffPosition(payload as { position_id: number; position_title: string; position_description: string })
 }

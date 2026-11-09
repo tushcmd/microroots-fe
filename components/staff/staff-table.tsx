@@ -21,7 +21,7 @@ export function StaffTable() {
 
   const refresh = useCallback(() => {
     if (!session) return
-    getAllStaffProfiles(session.token)
+    getAllStaffProfiles()
       .then((data) => setProfiles(data as StaffProfile[]))
       .catch(() => setProfiles([]))
   }, [session])

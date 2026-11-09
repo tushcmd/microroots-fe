@@ -38,7 +38,7 @@ function StaffDetailForm({
   useEffect(() => {
     if (!session) return
     let cancelled = false
-    getAllStaffPositions(session.token)
+    getAllStaffPositions()
       .then((data) => {
         if (cancelled) return
         const list = data as StaffPosition[]
@@ -68,7 +68,6 @@ function StaffDetailForm({
           email_address: email.trim(),
           ...(positionId ? { staff_position_id: positionId } : {}),
         },
-        session.token,
       )
       toast.success("Profile updated")
       onChanged()
@@ -128,7 +127,7 @@ function StaffDetailForm({
         description="This removes the profile and its associated records. This action can't be undone."
         onConfirm={async () => {
           if (!session) return
-          await deleteStaffProfile(staff.id, session.token)
+          await deleteStaffProfile(staff.id)
           toast.success("Profile deleted")
           onChanged()
           onClose()

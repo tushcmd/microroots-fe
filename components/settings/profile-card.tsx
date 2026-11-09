@@ -37,7 +37,7 @@ export function ProfileCard() {
     async (id: number) => {
       if (!session) return
       try {
-        setImages(await getStaffImages(id, session.token))
+        setImages(await getStaffImages(id))
       } catch {
         setImages([])
       }
@@ -57,7 +57,7 @@ export function ProfileCard() {
         cancelled = true
       }
     }
-    getAllStaffProfiles(session.token)
+    getAllStaffProfiles()
       .then((all) => {
         if (cancelled) return
         const me = (all as StaffProfile[]).find(
@@ -90,7 +90,6 @@ export function ProfileCard() {
     try {
       await updateStaffProfile(
         { staff_profile_id: profile.id, first_name: first.trim(), last_name: last.trim() },
-        session.token,
       )
       login({ ...session, name: `${first} ${last}`.trim() || session.name })
       toast.success("Name updated")
@@ -109,7 +108,7 @@ export function ProfileCard() {
     if (!session || !profile || !file) return
     setUploading(true)
     try {
-      await addStaffImage(profile.id, file, session.token)
+      await addStaffImage(profile.id, file)
       await loadImages(profile.id)
       setImgFailed(false)
       toast.success("Photo updated")
@@ -125,7 +124,7 @@ export function ProfileCard() {
     if (!session || !profile || !current) return
     setUploading(true)
     try {
-      await deleteStaffImage(Number(current.image_id), session.token)
+      await deleteStaffImage(Number(current.image_id))
       await loadImages(profile.id)
       toast.success("Photo removed")
     } catch (e) {

@@ -31,7 +31,7 @@ function StaffRolesEditorInner({ staffId }: { staffId: number }) {
   useEffect(() => {
     if (!session) return
     let cancelled = false
-    Promise.all([getStaffRoles(staffId, session.token), getAllAvailableRoles(session.token)])
+    Promise.all([getStaffRoles(staffId), getAllAvailableRoles()])
       .then(([instances, available]) => {
         if (cancelled) return
         setRoles(available as Role[])
@@ -92,7 +92,6 @@ function StaffRolesEditorInner({ staffId }: { staffId: number }) {
       await editStaffRoles(
         staffId,
         rows.map((r) => ({ role_id: r.roleId, sub_role_numbers: r.subRoles })),
-        session.token,
       )
       toast.success("Roles updated")
     } catch (e) {

@@ -77,7 +77,7 @@ export function ProductsTable({
         description={`This will remove ${displayText(deleting?.product_name, "this product")} from the list.`}
         onConfirm={async () => {
           if (!session || !deleting) return
-          await deleteProduct(deleting.id, session.token)
+          await deleteProduct(deleting.id)
           toast.success("Product deleted")
           onChanged()
         }}
