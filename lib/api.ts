@@ -24,8 +24,16 @@ export function setAuthExpiredHandler(handler: AuthHandler) {
   onAuthExpired = handler
 }
 
+function detailOf(body: unknown): string | undefined {
+  if (body && typeof body === "object" && "detail" in body) {
+    const d = (body as { detail?: unknown }).detail
+    return typeof d === "string" ? d : undefined
+  }
+  return undefined
+}
+
 function isInvalidTokenDetail(body: unknown): boolean {
-  const detail = (body as any)?.detail
+  const detail = detailOf(body)
   return (
     detail === "Invalid token." ||
     detail === "Authentication credentials were not provided."
@@ -54,7 +62,7 @@ async function apiCall<T>(
 
   const contentType = response.headers.get("content-type") || ""
   const text = await response.text()
-  let json: any = null
+  let json: unknown = null
   if (contentType.includes("application/json") && text) {
     try {
       json = JSON.parse(text)
@@ -67,15 +75,17 @@ async function apiCall<T>(
     if (response.status === 502) {
       throw new ApiError("Unable to reach the server. Check your connection.", 0)
     }
-    if (response.status === 401 && (isInvalidTokenDetail(json) || (json?.message || text) === "Not signed in")) {
+    const msg = json && typeof json === "object" && "message" in json && typeof (json as { message?: unknown }).message === "string"
+      ? (json as { message: string }).message
+      : undefined
+    if (response.status === 401 && (isInvalidTokenDetail(json) || msg === "Not signed in" || text === "Not signed in")) {
       onAuthExpired?.()
       throw new ApiError("Session expired", 401)
     }
-    const message = typeof json?.message === "string" ? json.message : response.statusText
-    throw new ApiError(message, response.status)
+    throw new ApiError(msg || response.statusText, response.status)
   }
 
-  return (json ?? ({} as ApiResponse<T>)) as ApiResponse<T>
+  return (json ?? {}) as ApiResponse<T>
 }
 
 function asList<T>(res: ApiResponse<unknown>, keys: string[] = []): T[] {
@@ -116,7 +126,7 @@ async function authJson<T>(path: string, body: unknown): Promise<T> {
     throw new ApiError("Unable to reach the server. Check your connection.", 0)
   }
   const text = await response.text()
-  let json: any = null
+  let json: unknown = null
   try {
     json = text ? JSON.parse(text) : null
   } catch {
@@ -126,7 +136,10 @@ async function authJson<T>(path: string, body: unknown): Promise<T> {
     if (response.status === 502) {
       throw new ApiError("Unable to reach the server. Check your connection.", 0)
     }
-    throw new ApiError(typeof json?.message === "string" ? json.message : response.statusText, response.status)
+    const msg = json && typeof json === "object" && "message" in json && typeof (json as { message?: unknown }).message === "string"
+      ? (json as { message: string }).message
+      : response.statusText
+    throw new ApiError(msg, response.status)
   }
   return json as T
 }
@@ -166,7 +179,7 @@ export async function getSession(): Promise<{ name: string | null; role: string 
   try {
     const res = await fetch("/api/auth/session", { credentials: "same-origin", cache: "no-store" })
     if (!res.ok) return null
-    return res.json()
+    return res.json() as Promise<{ name: string | null; role: string | null; staffNumber?: string }>
   } catch {
     return null
   }

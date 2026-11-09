@@ -9,10 +9,16 @@ import {
   tokenCookieOptions,
 } from "@/lib/server/backend"
 
+type LoginBody = { staff_number?: string; password?: string }
+type LoginResponse = {
+  payload?: { user_token?: string; full_name?: string | null; user_role?: string | null }
+  message?: string
+}
+
 export async function POST(request: Request) {
-  let body: { staff_number?: string; password?: string }
+  let body: LoginBody
   try {
-    body = await request.json()
+    body = (await request.json()) as LoginBody
   } catch {
     return NextResponse.json({ message: "Invalid request body" }, { status: 400 })
   }
@@ -33,9 +39,9 @@ export async function POST(request: Request) {
   }
 
   const text = await upstream.text()
-  let data: any = null
+  let data: LoginResponse | null = null
   try {
-    data = text ? JSON.parse(text) : null
+    data = text ? (JSON.parse(text) as LoginResponse) : null
   } catch {
     data = null
   }
