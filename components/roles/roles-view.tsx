@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageHeader, PageRoot } from "@/components/pages/shared/page-chrome"
 import { getAllAvailableRoles } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { displayText } from "@/lib/display"
@@ -19,32 +20,35 @@ export function RolesView() {
   }, [session])
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <p className="text-sm text-muted-foreground">Access control</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Roles</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Assigning roles to a specific staff member isn't built yet — this lists what's
-          available. Add that from a staff member's detail view once needed.
-        </p>
-      </div>
+    <PageRoot>
+      <PageHeader
+        eyebrow="Access control"
+        title="Roles & permissions"
+        description="Assigning roles to staff and managing role definitions require endpoints that are not yet available. The roles your account can view are listed below."
+      />
 
-      <Card className="border-border/70 shadow-none">
-        <CardContent className="flex flex-col divide-y p-0">
-          {roles.length === 0 && (
-            <p className="p-6 text-center text-sm text-muted-foreground">No roles returned yet.</p>
-          )}
+      {roles.length === 0 ? (
+        <Card className="border-border/70 shadow-none">
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            No roles to display, or this account doesn&apos;t have access to view them.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {roles.map((role) => (
-            <div key={role.id} className="p-4">
-              <p className="text-sm font-medium">
-                {displayText(role.role_title)}{" "}
-                <span className="text-muted-foreground">#{displayText(role.role_number)}</span>
-              </p>
-              <p className="text-xs text-muted-foreground">{displayText(role.role_description)}</p>
-            </div>
+            <Card key={role.id} className="border-border/70 shadow-none">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">{displayText(role.role_title)}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  {displayText(role.description ?? role.role_description)}
+                </p>
+              </CardContent>
+            </Card>
           ))}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      )}
+    </PageRoot>
   )
 }

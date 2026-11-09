@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PageHeader, PageRoot } from "@/components/pages/shared/page-chrome"
 import { getAllProducts, getAllStockPurchases } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import type { Product, StockPurchase } from "@/lib/types"
@@ -41,17 +42,14 @@ export function ProductsView() {
   }, [refreshProducts, refreshPurchases])
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <p className="text-sm text-muted-foreground">Catalog & stock control</p>
-          <h1 className="text-2xl font-semibold tracking-tight">Products & inventory</h1>
-        </div>
-        <div className="flex gap-2">
-          <AddProductDialog onCreated={refreshProducts} />
-          <RecordPurchaseDialog products={products} onRecorded={refreshPurchases} />
-        </div>
-      </div>
+    <PageRoot>
+      <PageHeader
+        eyebrow="Catalog & stock control"
+        title="Products & inventory"
+      >
+        <AddProductDialog onCreated={refreshProducts} />
+        <RecordPurchaseDialog products={products} onRecorded={refreshPurchases} />
+      </PageHeader>
 
       <Tabs defaultValue="products">
         <TabsList>
@@ -59,16 +57,16 @@ export function ProductsView() {
           <TabsTrigger value="purchases">Stock purchases</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
         </TabsList>
-        <TabsContent value="products">
-          <ProductsTable products={products} onChanged={refreshAll} />
+        <TabsContent value="products" className="mt-4">
+          <ProductsTable products={products} onChanged={refreshProducts} />
         </TabsContent>
-        <TabsContent value="purchases">
+        <TabsContent value="purchases" className="mt-4">
           <PurchasesTable purchases={purchases} products={products} onChanged={refreshAll} />
         </TabsContent>
-        <TabsContent value="categories">
+        <TabsContent value="categories" className="mt-4">
           <CategoriesPanel />
         </TabsContent>
       </Tabs>
-    </div>
+    </PageRoot>
   )
 }

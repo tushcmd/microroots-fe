@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -9,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { editStockPurchase } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { displayText } from "@/lib/display"
+import { notifyError } from "@/lib/notify"
 import type { Product, StockPurchase } from "@/lib/types"
 
 export function EditPurchaseDialog({
@@ -27,7 +29,6 @@ export function EditPurchaseDialog({
   const [quantity, setQuantity] = useState("")
   const [unitCost, setUnitCost] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
 
   useEffect(() => {
     if (!purchase) return
@@ -36,13 +37,11 @@ export function EditPurchaseDialog({
     setProductId(id != null ? String(id) : "")
     setQuantity(purchase.quantity != null ? String(purchase.quantity) : "")
     setUnitCost(purchase.stock_price_per_unit != null ? String(purchase.stock_price_per_unit) : "")
-    setError("")
   }, [purchase, products])
 
   async function save() {
     if (!session || !purchase) return
     setLoading(true)
-    setError("")
     try {
       await editStockPurchase(
         {
@@ -53,10 +52,11 @@ export function EditPurchaseDialog({
         },
         session.token,
       )
+      toast.success("Purchase updated")
       onSaved()
       onClose()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't save the purchase.")
+      notifyError(e, "Couldn't save the purchase.")
     } finally {
       setLoading(false)
     }
@@ -94,7 +94,6 @@ export function EditPurchaseDialog({
               <Input type="number" value={unitCost} onChange={(e) => setUnitCost(e.target.value)} />
             </div>
           </div>
-          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>

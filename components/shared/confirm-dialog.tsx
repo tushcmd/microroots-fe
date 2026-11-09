@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { notifyError } from "@/lib/notify"
 
 export function ConfirmDialog({
   open,
@@ -27,29 +28,26 @@ export function ConfirmDialog({
   onConfirm: () => Promise<void>
 }) {
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
 
   async function run() {
     setLoading(true)
-    setError("")
     try {
       await onConfirm()
       onOpenChange(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong.")
+      notifyError(e, "That didn't work. Try again.")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => { if (!next) setError(""); onOpenChange(next) }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        {error && <p className="text-sm font-medium text-destructive">{error}</p>}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancel

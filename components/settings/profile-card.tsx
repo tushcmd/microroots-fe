@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Camera } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -17,6 +18,7 @@ import {
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { displayInitials } from "@/lib/display"
+import { notifyError } from "@/lib/notify"
 import type { StaffImage, StaffProfile } from "@/lib/types"
 
 export function ProfileCard() {
@@ -29,7 +31,6 @@ export function ProfileCard() {
   const [loadError, setLoadError] = useState("")
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [message, setMessage] = useState("")
   const [imgFailed, setImgFailed] = useState(false)
 
   const loadImages = useCallback(
@@ -46,16 +47,21 @@ export function ProfileCard() {
 
   useEffect(() => {
     if (!session) return
-    if (!session.staffNumber) {
-      setLoadError("Sign out and sign back in once to enable profile editing.")
-      return
-    }
     let cancelled = false
+    const staffNumber = session.staffNumber
+    if (!staffNumber) {
+      queueMicrotask(() => {
+        if (!cancelled) setLoadError("Sign out and sign back in once to enable profile editing.")
+      })
+      return () => {
+        cancelled = true
+      }
+    }
     getAllStaffProfiles(session.token)
       .then((all) => {
         if (cancelled) return
         const me = (all as StaffProfile[]).find(
-          (p) => p.staff_number.toLowerCase() === session.staffNumber!.toLowerCase(),
+          (p) => p.staff_number.toLowerCase() === staffNumber.toLowerCase(),
         )
         if (!me) {
           setLoadError("Couldn't find your staff profile.")
@@ -66,13 +72,14 @@ export function ProfileCard() {
         setLast(me.last_name ?? "")
         loadImages(me.id)
       })
-      .catch(() => !cancelled && setLoadError("Couldn't load your profile."))
+      .catch(() => {
+        if (!cancelled) setLoadError("Couldn't load your profile.")
+      })
     return () => {
       cancelled = true
     }
   }, [session, loadImages])
 
-  // The docs don't define image order, so treat the highest id as the newest.
   const current = images.length
     ? [...images].sort((a, b) => Number(b.image_id) - Number(a.image_id))[0]
     : null
@@ -80,20 +87,19 @@ export function ProfileCard() {
   async function saveName() {
     if (!session || !profile) return
     setSaving(true)
-    setMessage("")
     try {
       await updateStaffProfile(
         { staff_profile_id: profile.id, first_name: first.trim(), last_name: last.trim() },
         session.token,
       )
       login({ ...session, name: `${first} ${last}`.trim() || session.name })
-      setMessage("Name updated.")
+      toast.success("Name updated")
     } catch (e) {
-      setMessage(
-        e instanceof ApiError && e.status === 406
-          ? "Couldn't save. Your account may not have permission to edit profile details, or a field is invalid."
-          : "Couldn't save your name. Try again.",
-      )
+      if (e instanceof ApiError && e.status === 406) {
+        notifyError(e, "Couldn't save. Your account may not have permission to edit profile details, or a field is invalid.")
+      } else {
+        notifyError(e, "Couldn't save your name. Try again.")
+      }
     } finally {
       setSaving(false)
     }
@@ -102,13 +108,13 @@ export function ProfileCard() {
   async function onPickFile(file: File | undefined) {
     if (!session || !profile || !file) return
     setUploading(true)
-    setMessage("")
     try {
       await addStaffImage(profile.id, file, session.token)
       await loadImages(profile.id)
-      setMessage("Photo updated.")
-    } catch {
-      setMessage("Couldn't upload the photo. Try a smaller JPG or PNG.")
+      setImgFailed(false)
+      toast.success("Photo updated")
+    } catch (e) {
+      notifyError(e, "Couldn't upload the photo. Try a smaller JPG or PNG.")
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ""
@@ -118,19 +124,19 @@ export function ProfileCard() {
   async function removePhoto() {
     if (!session || !profile || !current) return
     setUploading(true)
-    setMessage("")
     try {
       await deleteStaffImage(Number(current.image_id), session.token)
       await loadImages(profile.id)
-    } catch {
-      setMessage("Couldn't remove the photo.")
+      toast.success("Photo removed")
+    } catch (e) {
+      notifyError(e, "Couldn't remove the photo.")
     } finally {
       setUploading(false)
     }
   }
 
   return (
-    <Card className="max-w-md border-border/70 shadow-none">
+    <Card className="border-border/70 shadow-none">
       <CardHeader>
         <CardTitle className="text-base">My profile</CardTitle>
       </CardHeader>
@@ -140,19 +146,8 @@ export function ProfileCard() {
         {profile && (
           <>
             <div className="flex items-center gap-4">
-              {/* {current ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={mediaUrl(current.image_url)}
-                  alt="Profile photo"
-                  className="size-16 rounded-full border object-cover"
-                />
-              ) : (
-                <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
-                  {displayInitials(first, last, profile.email_address)}
-                </div>
-              )} */}
               {current && !imgFailed ? (
+                // eslint-disable-next-line @next/next/no-img-element -- remote media URL from API
                 <img
                   src={mediaUrl(current.image_url)}
                   alt="Profile photo"
@@ -202,7 +197,6 @@ export function ProfileCard() {
               </div>
             </div>
 
-            {message && <p className="text-sm text-muted-foreground">{message}</p>}
             <Button onClick={saveName} disabled={saving || (!first.trim() && !last.trim())}>
               {saving ? "Saving…" : "Save name"}
             </Button>

@@ -1,15 +1,9 @@
 "use client"
 
-// NOTE: session is persisted to localStorage for now, which is fine to get
-// the app working end to end but exposes the token to any script running on
-// the page (XSS risk). Before this goes further than internal testing,
-// move the token into an httpOnly cookie set by a Next.js route handler
-// instead of reading/writing it from client components.
-
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useSyncExternalStore, type ReactNode } from "react"
 import type { Session } from "./types"
 
-const STORAGE_KEY = "microroots.session"
+const STORAGE_KEY = "microroots_session"
 
 interface AuthContextValue {
   session: Session | null
@@ -18,35 +12,59 @@ interface AuthContextValue {
   logout: () => void
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+const AuthContext = createContext<AuthContextValue | null>(null)
+
+let listeners: Array<() => void> = []
+
+function emit() {
+  for (const l of listeners) l()
+}
+
+function subscribe(listener: () => void) {
+  listeners = [...listeners, listener]
+  return () => {
+    listeners = listeners.filter((l) => l !== listener)
+  }
+}
+
+function getSnapshot(): string | null {
+  if (typeof window === "undefined") return null
+  try {
+    return window.localStorage.getItem(STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+function getServerSnapshot(): string | null {
+  return null
+}
+
+function parseSession(raw: string | null): Session | null {
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as Session
+  } catch {
+    return null
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const session = parseSession(raw)
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY)
-      if (raw) setSession(JSON.parse(raw))
-    } catch {
-      // corrupted or inaccessible storage — treat as logged out
-    } finally {
-      setIsLoading(false)
-    }
+  const login = useCallback((next: Session) => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    emit()
   }, [])
 
-  function login(next: Session) {
-    setSession(next)
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-  }
-
-  function logout() {
-    setSession(null)
+  const logout = useCallback(() => {
     window.localStorage.removeItem(STORAGE_KEY)
-  }
+    emit()
+  }, [])
 
   return (
-    <AuthContext.Provider value={{ session, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ session, isLoading: false, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
@@ -54,6 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider")
+  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>")
   return ctx
 }

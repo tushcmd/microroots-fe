@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Plus, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -18,7 +19,9 @@ import { Label } from "@/components/ui/label"
 import { addProductCategory, deleteProductCategory, getAllProductCategories } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { displayText } from "@/lib/display"
+import { notifyError } from "@/lib/notify"
 import type { ProductCategory } from "@/lib/types"
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 
 export function CategoriesPanel() {
   const { session } = useAuth()
@@ -27,7 +30,7 @@ export function CategoriesPanel() {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [deleting, setDeleting] = useState<ProductCategory | null>(null)
 
   function refresh() {
     if (!session) return
@@ -41,27 +44,17 @@ export function CategoriesPanel() {
   async function handleCreate() {
     if (!session) return
     setLoading(true)
-    setError("")
     try {
       await addProductCategory({ category_name: name, description }, session.token)
+      toast.success("Category added")
       setOpen(false)
       setName("")
       setDescription("")
       refresh()
-    } catch {
-      setError("Couldn't create the category.")
+    } catch (e) {
+      notifyError(e, "Couldn't create the category.")
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function handleDelete(id: number) {
-    if (!session) return
-    try {
-      await deleteProductCategory(id, session.token)
-      refresh()
-    } catch {
-      // leave the list as-is; the row will still be there to retry
     }
   }
 
@@ -91,7 +84,6 @@ export function CategoriesPanel() {
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-sm font-medium text-destructive">{error}</p>}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>
@@ -115,12 +107,25 @@ export function CategoriesPanel() {
                 <p className="text-sm font-medium">{displayText(cat.category_name)}</p>
                 <p className="text-xs text-muted-foreground">{displayText(cat.category_description)}</p>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => handleDelete(cat.id)}>
+              <Button variant="ghost" size="icon" onClick={() => setDeleting(cat)}>
                 <Trash2 className="size-4 text-muted-foreground" />
               </Button>
             </div>
           ))}
         </div>
+
+        <ConfirmDialog
+          open={!!deleting}
+          onOpenChange={(open) => !open && setDeleting(null)}
+          title={`Delete "${deleting?.category_name ?? "category"}"?`}
+          description="Products in this category may be affected."
+          onConfirm={async () => {
+            if (!session || !deleting) return
+            await deleteProductCategory(deleting.id, session.token)
+            toast.success("Category deleted")
+            refresh()
+          }}
+        />
       </CardContent>
     </Card>
   )

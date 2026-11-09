@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -30,6 +31,7 @@ export function LoginForm() {
         token: data.user_token,
         staffNumber: staffNumber.trim(),
       })
+      toast.success("Signed in")
       router.push("/dashboard")
     } catch (err) {
       if (err instanceof ApiError && err.status === 406) {

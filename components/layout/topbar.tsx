@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { ChevronDown, LogOut, Menu, UserCog } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -16,6 +17,7 @@ import { displayInitials, displayText } from "@/lib/display"
 
 export function Topbar({ title, onMenuClick }: { title: string; onMenuClick: () => void }) {
   const { session, logout } = useAuth()
+  const router = useRouter()
   if (!session) return null
 
   const displayName = displayText(session.name, "Staff")
@@ -52,7 +54,7 @@ export function Topbar({ title, onMenuClick }: { title: string; onMenuClick: () 
           <ChevronDown className="size-4 text-muted-foreground" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/settings")}>
             <UserCog /> Profile settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />

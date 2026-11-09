@@ -25,15 +25,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [isLoading, session, router])
 
   if (isLoading || !session) {
-    // Avoid flashing protected content (or an empty shell) while the
-    // stored session is being read, or during the redirect to /login.
     return <div className="flex min-h-screen items-center justify-center bg-muted/20" />
   }
 
   return (
     <div className="min-h-screen bg-muted/20">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="lg:pl-[260px]">
+      <div className="lg:pl-[240px]">
         <Topbar title={titleByPath[pathname] ?? "Dashboard"} onMenuClick={() => setSidebarOpen(true)} />
         <main className="mx-auto max-w-[1500px] p-5 sm:p-8">{children}</main>
       </div>

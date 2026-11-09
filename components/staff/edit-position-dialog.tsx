@@ -1,13 +1,57 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { updateStaffPosition } from "@/lib/api"
+import { editStaffPosition } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { notifyError } from "@/lib/notify"
 import type { StaffPosition } from "@/lib/types"
+
+function EditPositionForm({
+  position,
+  onClose,
+  onSaved,
+}: {
+  position: StaffPosition
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const { session } = useAuth()
+  const [name, setName] = useState(position.position_name ?? position.position_title ?? "")
+  const [loading, setLoading] = useState(false)
+
+  async function save() {
+    if (!session) return
+    setLoading(true)
+    try {
+      await editStaffPosition({ staff_position_id: position.id, staff_position_name: name.trim() }, session.token)
+      toast.success("Position updated")
+      onSaved()
+      onClose()
+    } catch (e) {
+      notifyError(e, "Couldn't save the position.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="flex flex-col gap-2 py-4">
+        <Label>Position name</Label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button onClick={save} disabled={loading || !name.trim()}>{loading ? "Saving…" : "Save"}</Button>
+      </DialogFooter>
+    </>
+  )
+}
 
 export function EditPositionDialog({
   position,
@@ -18,59 +62,14 @@ export function EditPositionDialog({
   onClose: () => void
   onSaved: () => void
 }) {
-  const { session } = useAuth()
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-
-  useEffect(() => {
-    if (position) {
-      setTitle(position.position_title ?? "")
-      setDescription(position.position_description ?? "")
-      setError("")
-    }
-  }, [position])
-
-  async function save() {
-    if (!session || !position) return
-    setLoading(true)
-    setError("")
-    try {
-      await updateStaffPosition(
-        { position_id: position.id, position_title: title, position_description: description },
-        session.token,
-      )
-      onSaved()
-      onClose()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't save the position.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
     <Dialog open={!!position} onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit position</DialogTitle>
+          <DialogDescription>Update the position name.</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-4 py-4">
-          <div className="flex flex-col gap-2">
-            <Label>Position title</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label>Description</Label>
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} />
-          </div>
-          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={save} disabled={loading || !title}>{loading ? "Saving…" : "Save"}</Button>
-        </DialogFooter>
+        {position && <EditPositionForm key={position.id} position={position} onClose={onClose} onSaved={onSaved} />}
       </DialogContent>
     </Dialog>
   )

@@ -6,8 +6,9 @@ export interface Session {
 
 export interface StaffPosition {
   id: number
-  position_title: string
-  position_description: string
+  position_title?: string | null
+  position_name?: string | null
+  position_description?: string | null
 }
 export interface StaffProfile {
   id: number
@@ -19,7 +20,10 @@ export interface StaffProfile {
   country_name: string | null
   type_of_employment: string | null
   is_profile_active: boolean
-  staff_position_details: StaffPosition | null
+  staff_position_details?: StaffPosition | null
+  staff_position?: string | null
+  staff_position_id?: number | null
+  date_joined?: string | null
 }
 
 export interface ProductCategory {
@@ -34,8 +38,8 @@ export interface Product {
   category: string | null
   retail_price: number | string | null
   quantity: number | string | null
+  quantity_available?: number | string | null
   minimum_quantity: number | string | null
-  // add these optional fields to the existing Product interface:
   product_category_id?: number | null
   supplier_id?: number | null
   unit_of_measurement?: string | null
@@ -50,21 +54,23 @@ export interface StockPurchase {
   stock_price_per_unit: number | string | null
   stock_batch_number: string | null
   date: string | null
-  // add to StockPurchase:
   product_id?: number | null
+  created_at?: string | null
+  purchase_date?: string | null
+  createdAt?: string | null
 }
 
 export interface Role {
   id: number
   role_title: string | null
   role_number: string | null
-  role_description: string | null
+  role_description?: string | null
+  description?: string | null
 }
 
 export interface RoleInstance {
   id: number
   role: { id: number; role_title: string | null; role_number: string | null } | null
-  // sub-role field names are a guess from the docs: "looked up by its unique role_number"
   sub_role: { role_number: string | number | null } | null
 }
 

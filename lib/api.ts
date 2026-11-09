@@ -383,3 +383,34 @@ export async function deleteStaffImage(image_id: number, token: string): Promise
     token,
   })
 }
+// Admin setup aliases (backward-compat with setup form naming)
+export async function createAdminAccount(data: {
+  admin_number?: string
+  email_address?: string
+  password?: string
+  username?: string
+}): Promise<void> {
+  // try existing admin creation endpoint shape; adjust if backend differs
+  await apiCall("/staff-profile/create-admin-profile/", {
+    method: "POST",
+    body: JSON.stringify({ username: data.username || data.admin_number || data.email_address }),
+  })
+}
+
+// Position edit (supports both param shapes used in codebase)
+export async function editStaffPosition(
+  data:
+    | { position_id: number; position_title: string; position_description?: string }
+    | { staff_position_id: number; staff_position_name: string },
+  token: string,
+): Promise<void> {
+  const payload =
+    "staff_position_id" in data
+      ? {
+          position_id: data.staff_position_id,
+          position_title: data.staff_position_name,
+          position_description: "",
+        }
+      : data
+  await updateStaffPosition(payload as { position_id: number; position_title: string; position_description: string }, token)
+}
