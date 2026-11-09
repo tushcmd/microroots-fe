@@ -35,6 +35,11 @@ export function ProductsView() {
     refreshPurchases()
   }, [refreshProducts, refreshPurchases])
 
+  const refreshAll = useCallback(() => {
+    refreshProducts()
+    refreshPurchases()
+  }, [refreshProducts, refreshPurchases])
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -55,10 +60,10 @@ export function ProductsView() {
           <TabsTrigger value="categories">Categories</TabsTrigger>
         </TabsList>
         <TabsContent value="products">
-          <ProductsTable products={products} />
+          <ProductsTable products={products} onChanged={refreshAll} />
         </TabsContent>
         <TabsContent value="purchases">
-          <PurchasesTable purchases={purchases} />
+          <PurchasesTable purchases={purchases} products={products} onChanged={refreshAll} />
         </TabsContent>
         <TabsContent value="categories">
           <CategoriesPanel />

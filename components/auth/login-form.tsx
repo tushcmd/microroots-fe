@@ -28,6 +28,7 @@ export function LoginForm() {
         name: data.full_name,
         role: data.user_role,
         token: data.user_token,
+        staffNumber: staffNumber.trim(),
       })
       router.push("/dashboard")
     } catch (err) {

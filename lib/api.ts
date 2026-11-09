@@ -253,3 +253,133 @@ export async function deleteProductCategory(
     token,
   })
 }
+
+
+// --- Staff: delete + roles ------------------------------------------------
+
+export async function deleteStaffProfile(id: number, token: string): Promise<void> {
+  await apiCall(`/staff-profile/delete-staff-profile/${id}/`, { method: "DELETE", token })
+}
+
+export async function deleteStaffPosition(id: number, token: string): Promise<void> {
+  await apiCall(`/staff-profile/delete-staff-position/${id}/`, { method: "DELETE", token })
+}
+
+export async function getStaffRoles(staff_profile_id: number, token: string) {
+  const res = await apiCall<unknown>("/staff-profile/get-this-staff-roles/", {
+    method: "POST",
+    body: JSON.stringify({ staff_profile_id }),
+    token,
+  })
+  return asList(res, ["roles", "role_instances"])
+}
+
+export async function editStaffRoles(
+  staff_profile_id: number,
+  role_instance_list: { role_id: number; sub_role_numbers: string[] }[],
+  token: string,
+): Promise<void> {
+  await apiCall("/staff-profile/edit-staff-roles/", {
+    method: "POST",
+    body: JSON.stringify({ staff_profile_id, role_instance_list }),
+    token,
+  })
+}
+
+// --- Products: edit + delete ---------------------------------------------
+
+export async function editProduct(
+  data: {
+    product_id: number
+    product_category_id: number
+    supplier_id: number
+    product_name: string
+    unit_of_measurement: string
+    minimum_quantity: string
+    retail_price: string
+    discount_type: string
+    recommended_discount: string
+  },
+  token: string,
+): Promise<void> {
+  await apiCall("/products/edit-single-product/", { method: "POST", body: JSON.stringify(data), token })
+}
+
+export async function deleteProduct(product_id: number, token: string): Promise<void> {
+  await apiCall("/products/delete-single-product/", {
+    method: "POST",
+    body: JSON.stringify({ product_id }),
+    token,
+  })
+}
+
+export async function editStockPurchase(
+  data: { stock_purchase_inventory_id: number; product_id: number; quantity: string; stock_price_per_unit: string },
+  token: string,
+): Promise<void> {
+  await apiCall("/products/edit-single-stock-purchase-inventories/", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token,
+  })
+}
+
+export async function deleteStockPurchase(stock_purchase_inventory_id: number, token: string): Promise<void> {
+  await apiCall("/products/delete-single-stock-purchase-inventory/", {
+    method: "POST",
+    body: JSON.stringify({ stock_purchase_inventory_id }),
+    token,
+  })
+}
+
+// --- Staff images ---------------------------------------------------------
+
+// export function mediaUrl(path: string) {
+//   return /^https?:\/\//.test(path) ? path : `${BASE_URL}${path}`
+// }
+export function mediaUrl(path: string) {
+  // Backend may return a relative path or an absolute URL pointing at its own
+  // internal host. Either way, serve it from the API host we actually reach.
+  try {
+    const { pathname } = new URL(path, BASE_URL)
+    return `${BASE_URL}${pathname}`
+  } catch {
+    return `${BASE_URL}${path}`
+  }
+}
+
+export async function getStaffImages(staff_profile_id: number, token: string) {
+  const res = await apiCall<unknown>("/staff-profile/get-all-staff-images/", {
+    method: "POST",
+    body: JSON.stringify({ staff_profile_id }),
+    token,
+  })
+  return asList<{ image_id: string; image_url: string }>(res, ["image_list"])
+}
+
+export async function addStaffImage(staff_profile_id: number, file: File, token: string): Promise<void> {
+  const form = new FormData()
+  form.append("staff_profile_id", String(staff_profile_id))
+  form.append("images", file)
+
+  let response: Response
+  try {
+    // No Content-Type header: the browser must set the multipart boundary itself.
+    response = await fetch(`${BASE_URL}/staff-profile/add-staff-image/`, {
+      method: "POST",
+      headers: { Authorization: `Token ${token}` },
+      body: form,
+    })
+  } catch {
+    throw new ApiError("Unable to reach the server. Check your connection.", 0)
+  }
+  if (!response.ok) throw new ApiError("Couldn't upload the photo.", response.status)
+}
+
+export async function deleteStaffImage(image_id: number, token: string): Promise<void> {
+  await apiCall("/staff-profile/delete-staff-image/", {
+    method: "POST",
+    body: JSON.stringify({ image_id }),
+    token,
+  })
+}

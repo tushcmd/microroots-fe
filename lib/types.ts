@@ -35,6 +35,12 @@ export interface Product {
   retail_price: number | string | null
   quantity: number | string | null
   minimum_quantity: number | string | null
+  // add these optional fields to the existing Product interface:
+  product_category_id?: number | null
+  supplier_id?: number | null
+  unit_of_measurement?: string | null
+  discount_type?: string | null
+  recommended_discount?: number | string | null
 }
 
 export interface StockPurchase {
@@ -44,6 +50,8 @@ export interface StockPurchase {
   stock_price_per_unit: number | string | null
   stock_batch_number: string | null
   date: string | null
+  // add to StockPurchase:
+  product_id?: number | null
 }
 
 export interface Role {
@@ -51,6 +59,25 @@ export interface Role {
   role_title: string | null
   role_number: string | null
   role_description: string | null
+}
+
+export interface RoleInstance {
+  id: number
+  role: { id: number; role_title: string | null; role_number: string | null } | null
+  // sub-role field names are a guess from the docs: "looked up by its unique role_number"
+  sub_role: { role_number: string | number | null } | null
+}
+
+export interface Session {
+  name: string | null
+  role: string | null
+  token: string
+  staffNumber?: string
+}
+
+export interface StaffImage {
+  image_id: string
+  image_url: string
 }
 
 export const UNIT_OF_MEASUREMENT = ["piece", "metre", "kg", "other", "not_selected"] as const

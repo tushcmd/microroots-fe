@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { changeMyStaffPassword } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { ProfileCard } from "@/components/settings/profile-card"
 
 export function SettingsView() {
   const { session, logout } = useAuth()
@@ -43,6 +44,7 @@ export function SettingsView() {
         <p className="text-sm text-muted-foreground">Account</p>
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
       </div>
+      <ProfileCard />
 
       <Card className="max-w-md border-border/70 shadow-none">
         <CardHeader>

@@ -1,7 +1,9 @@
 "use client"
 
+
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { useEffect, useState } from "react"
-import { Plus } from "lucide-react"
+import { Pencil, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -13,9 +15,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { EditPositionDialog } from "@/components/staff/edit-position-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createStaffPosition, getAllStaffPositions } from "@/lib/api"
+import { createStaffPosition, deleteStaffPosition, getAllStaffPositions } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { displayText } from "@/lib/display"
 import type { StaffPosition } from "@/lib/types"
@@ -28,6 +31,8 @@ export function PositionsPanel() {
   const [description, setDescription] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [editing, setEditing] = useState<StaffPosition | null>(null)
+  const [deleting, setDeleting] = useState<StaffPosition | null>(null)
 
   function refresh() {
     if (!session) return
@@ -104,12 +109,38 @@ export function PositionsPanel() {
             <p className="py-6 text-center text-sm text-muted-foreground">No positions yet.</p>
           )}
           {positions.map((position) => (
-            <div key={position.id} className="py-3">
-              <p className="text-sm font-medium">{displayText(position.position_title)}</p>
-              <p className="text-xs text-muted-foreground">{displayText(position.position_description)}</p>
+            // <div key={position.id} className="py-3">
+            //   <p className="text-sm font-medium">{displayText(position.position_title)}</p>
+            //   <p className="text-xs text-muted-foreground">{displayText(position.position_description)}</p>
+            // </div>
+            <div key={position.id} className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium">{displayText(position.position_title)}</p>
+                <p className="text-xs text-muted-foreground">{displayText(position.position_description)}</p>
+              </div>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="icon" aria-label="Edit position" onClick={() => setEditing(position)}>
+                  <Pencil className="size-4 text-muted-foreground" />
+                </Button>
+                <Button variant="ghost" size="icon" aria-label="Delete position" onClick={() => setDeleting(position)}>
+                  <Trash2 className="size-4 text-muted-foreground" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
+        <EditPositionDialog position={editing} onClose={() => setEditing(null)} onSaved={refresh} />
+        <ConfirmDialog
+          open={!!deleting}
+          onOpenChange={(open) => !open && setDeleting(null)}
+          title={`Delete "${deleting?.position_title ?? "position"}"?`}
+          description="Staff already holding this position keep their profile but lose the position."
+          onConfirm={async () => {
+            if (!deleting || !session) return
+            await deleteStaffPosition(deleting.id, session.token)
+            refresh()
+          }}
+        />
       </CardContent>
     </Card>
   )

@@ -6,10 +6,15 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { updateStaffProfile } from "@/lib/api"
+// import { updateStaffProfile } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { displayInitials, displayName, displayText } from "@/lib/display"
 import type { StaffPosition, StaffProfile } from "@/lib/types"
+// added for staff roles editor
+// import { useState as _unused } from "react" // not needed, useState is already imported
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
+import { deleteStaffProfile, updateStaffProfile } from "@/lib/api"
+import { StaffRolesEditor } from "./staff-roles-editor"
 
 export function StaffDetailSheet({
   staff,
@@ -27,6 +32,7 @@ export function StaffDetailSheet({
   const [active, setActive] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     if (staff) {
@@ -129,6 +135,28 @@ export function StaffDetailSheet({
                 {saving ? "Saving…" : "Save changes"}
               </Button>
             </div>
+            <div className="border-t pt-5">
+              <StaffRolesEditor staffId={staff.id} />
+            </div>
+
+            <div className="flex flex-col gap-2 border-t pt-5">
+              <p className="text-sm font-medium">Danger zone</p>
+              <Button variant="destructive" onClick={() => setConfirmDelete(true)}>
+                Delete profile
+              </Button>
+            </div>
+
+            <ConfirmDialog
+              open={confirmDelete}
+              onOpenChange={setConfirmDelete}
+              title="Delete this staff profile?"
+              description="The profile is removed from the staff list. This can't be undone from the dashboard."
+              onConfirm={async () => {
+                await deleteStaffProfile(staff.id, session!.token)
+                onUpdated?.()
+                onClose()
+              }}
+            />
           </div>
         )}
       </SheetContent>
