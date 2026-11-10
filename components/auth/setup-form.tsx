@@ -92,7 +92,7 @@ export function SetupForm() {
         <div className="mb-8 flex flex-col items-center gap-4">
           <Brand />
           <div className="mt-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Set up MicroRootsKe</h1>
+            <h1 className="text-2xl font-medium tracking-tight">Set up MicroRootsKe</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Create the one-time administrator account for this workspace.
             </p>

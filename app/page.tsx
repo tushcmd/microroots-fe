@@ -109,7 +109,7 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 sm:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:py-24">
             <div>
               <p className="text-sm font-medium text-primary">Microgreens grown in Nairobi</p>
-              <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+              <h1 className="mt-4 max-w-3xl text-4xl font-medium tracking-tight text-balance sm:text-5xl">
                 Fresh microgreens from Nairobi grow rooms, monitored tray by tray.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -160,7 +160,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-6 py-16 sm:px-10 sm:py-20">
             <div className="max-w-2xl">
               <p className="text-sm font-medium text-primary">Product in one glance</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h2 className="mt-3 text-2xl font-medium tracking-tight sm:text-3xl">
                 One loop from tray to Nairobi delivery
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -178,7 +178,7 @@ export default function LandingPage() {
                         <ArrowRight className="size-4 text-muted-foreground/60" aria-hidden="true" />
                       ) : null}
                     </div>
-                    <h3 className="mt-4 text-sm font-semibold">{item.title}</h3>
+                    <h3 className="mt-4 text-sm font-medium">{item.title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
                   </CardContent>
                 </Card>
@@ -191,14 +191,14 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-6 py-16 sm:px-10 sm:py-20">
             <div className="max-w-2xl">
               <p className="text-sm font-medium text-primary">Why it matters</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h2 className="mt-3 text-2xl font-medium tracking-tight sm:text-3xl">
                 Operational clarity for a working farm
               </h2>
             </div>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {reasons.map((item) => (
                 <div key={item.title} className="border-t border-border/70 pt-5">
-                  <h3 className="text-base font-semibold">{item.title}</h3>
+                  <h3 className="text-base font-medium">{item.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
                 </div>
               ))}
@@ -210,7 +210,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-6 py-16 sm:px-10 sm:py-20">
             <div className="max-w-2xl">
               <p className="text-sm font-medium text-primary">Who it’s for</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h2 className="mt-3 text-2xl font-medium tracking-tight sm:text-3xl">
                 Built around Nairobi supply
               </h2>
             </div>
@@ -218,7 +218,7 @@ export default function LandingPage() {
               {audiences.map((item) => (
                 <Card key={item.title} className="border-border/70 bg-background shadow-none">
                   <CardContent className="p-5">
-                    <h3 className="text-sm font-semibold">{item.title}</h3>
+                    <h3 className="text-sm font-medium">{item.title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
                   </CardContent>
                 </Card>
@@ -231,7 +231,7 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 sm:px-10 sm:py-20 lg:grid-cols-[1fr_1fr] lg:items-center">
             <div>
               <p className="text-sm font-medium text-primary">Operations platform</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h2 className="mt-3 text-2xl font-medium tracking-tight sm:text-3xl">
                 Staff run production, stock, and orders in one place
               </h2>
               <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">

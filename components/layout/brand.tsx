@@ -7,7 +7,7 @@ export function Brand() {
         <Leaf className="size-5" />
       </div>
       <div>
-        <div className="text-sm font-bold tracking-tight">
+        <div className="text-sm font-medium tracking-tight">
           MicroRoots<span className="text-primary">Ke</span>
         </div>
         <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">

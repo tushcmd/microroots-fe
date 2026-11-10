@@ -1,9 +1,22 @@
 import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
+import { Geist, Inter } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { ThemeProvider } from "@/components/shared/theme-provider"
 import { Toaster } from "@/components/shared/toaster"
 import "./globals.css"
+
+const geist = Geist({
+  subsets: ["latin"],
+  weight: "500",
+  variable: "--font-geist-sans",
+})
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: "600",
+  variable: "--font-inter",
+})
 
 export const metadata: Metadata = {
   title: "MicroRootsKe | Farm operations",
@@ -29,7 +42,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${geist.variable} ${inter.variable}`}>
       <body className="antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>{children}</AuthProvider>

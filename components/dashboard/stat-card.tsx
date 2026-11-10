@@ -33,7 +33,7 @@ export function StatCard({
       <CardContent className="flex items-start justify-between p-5">
         <div>
           <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
+          <p className="mt-2 text-2xl font-medium tracking-tight">{value}</p>
           <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
             {detail}
             {href && (

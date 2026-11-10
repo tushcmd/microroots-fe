@@ -154,7 +154,7 @@ export function ProfileCard() {
                   onError={() => setImgFailed(true)}
                 />
               ) : (
-                <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
+                <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-lg font-medium text-primary">
                   {displayInitials(first, last, profile.email_address)}
                 </div>
               )}
