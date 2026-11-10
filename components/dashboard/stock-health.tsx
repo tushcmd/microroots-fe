@@ -28,7 +28,7 @@ export function StockHealth({
         ) : (
           <>
             <div className="flex items-end justify-between">
-              <span className="text-2xl font-semibold tracking-tight">{percent}%</span>
+              <span className="text-2xl font-medium tracking-tight">{percent}%</span>
               <span className="text-xs text-muted-foreground">
                 {healthy} of {total} well stocked
               </span>

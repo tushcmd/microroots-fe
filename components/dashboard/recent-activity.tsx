@@ -62,10 +62,10 @@ export function RecentActivity({
               return (
                 <div key={purchase.id} className="flex items-start gap-3">
                   <div className="flex size-10 shrink-0 flex-col items-center justify-center rounded-lg bg-muted leading-none">
-                    <span className="text-[9px] font-semibold uppercase text-muted-foreground">
+                    <span className="text-[9px] font-medium uppercase text-muted-foreground">
                       {formatMonth(pd)}
                     </span>
-                    <span className="text-sm font-semibold">{formatDay(pd)}</span>
+                    <span className="text-sm font-medium">{formatDay(pd)}</span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{displayText(purchase.product_name)}</p>
