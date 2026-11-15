@@ -30,22 +30,29 @@ interface Rule {
   reason: string
 }
 
-// Ordered: the first rule whose pattern matches the meal drives the result.
+// Ordered most-specific first. The first rule whose pattern matches the meal
+// drives the result, so e.g. "grilled salmon" hits the fish rule (not the
+// generic grilled-meat rule) and "beef tacos" hits the taco rule.
 const RULES: Rule[] = [
   {
-    pattern: /steak|beef|lamb|roast|grill|bbq|barbecue|kebab/i,
-    ids: ["chefs-blend", "radish-microgreens", "spicy-mix"],
-    reason: "Peppery, bold greens cut through rich, grilled meat.",
-  },
-  {
-    pattern: /fish|salmon|tuna|seafood|prawn|shrimp|cod|tilapia/i,
+    pattern: /fish|salmon|tuna|seafood|prawn|shrimp|cod|tilapia|fishy/i,
     ids: ["radish-microgreens", "broccoli-microgreens"],
     reason: "A peppery, crisp lift that brightens delicate fish.",
   },
   {
-    pattern: /egg|omelette|breakfast|brunch|toast|avocado|sandwich/i,
-    ids: ["broccoli-microgreens", "mild-family-blend", "sunflower-shoots"],
-    reason: "Mild, fresh greens fold into eggs and toast without overpowering them.",
+    pattern: /taco|burrito|quesadilla|nachos|mexican|salsa|fajita/i,
+    ids: ["radish-microgreens", "spicy-mix"],
+    reason: "Peppery heat stands up to bold, spiced Mexican flavours.",
+  },
+  {
+    pattern: /pizza|flatbread|wrap|burger|fries|fried|sandwich/i,
+    ids: ["mild-family-blend", "broccoli-microgreens"],
+    reason: "Fresh, mild greens to balance rich, cheesy or fried food.",
+  },
+  {
+    pattern: /pasta|risotto|orzo|noodle|spaghetti|mac|lasagna|lasagne/i,
+    ids: ["pea-shoots", "mild-family-blend"],
+    reason: "Sweet, tender shoots balance starchy or creamy pasta.",
   },
   {
     pattern: /soup|broth|stew|ramen|congee|dal|chowder/i,
@@ -53,29 +60,24 @@ const RULES: Rule[] = [
     reason: "Tender greens added at the end keep their crunch in warm bowls.",
   },
   {
-    pattern: /taco|burrito|quesadilla|nachos|mexican|salsa/i,
-    ids: ["radish-microgreens", "spicy-mix"],
-    reason: "Peppery heat stands up to bold, spiced Mexican flavours.",
+    pattern: /egg|omelette|breakfast|brunch|toast|avocado|frittata/i,
+    ids: ["broccoli-microgreens", "mild-family-blend", "sunflower-shoots"],
+    reason: "Mild, fresh greens fold into eggs and toast without overpowering them.",
   },
   {
-    pattern: /pasta|risotto|orzo|noodle|spaghetti|mac/i,
-    ids: ["pea-shoots", "mild-family-blend"],
-    reason: "Sweet, tender shoots balance starchy or creamy pasta.",
-  },
-  {
-    pattern: /salad|bowl|grain|quinoa|poke|buddha/i,
+    pattern: /smoothie|juice|drink|shake|bowl|grain|quinoa|poke|salad/i,
     ids: ["sunflower-shoots", "chefs-blend", "pea-shoots"],
     reason: "Juicy, crunchy shoots add body and texture to bowls and salads.",
   },
   {
-    pattern: /pizza|flatbread|wrap|burger|fries|fried/i,
-    ids: ["mild-family-blend", "broccoli-microgreens"],
-    reason: "Fresh, mild greens to balance rich, cheesy or fried food.",
+    pattern: /dessert|sweet|cake|chocolate|pancake|waffle/i,
+    ids: ["pea-shoots"],
+    reason: "Sweet pea shoots add a fresh, green counterpoint to something sweet.",
   },
   {
-    pattern: /smoothie|juice|drink|shake/i,
-    ids: ["broccoli-microgreens"],
-    reason: "Mild broccoli microgreens blend in without bitterness.",
+    pattern: /spicy|hot|chilli|chili|heat|curry|harissa|sichuan|buffalo/i,
+    ids: ["mild-family-blend", "broccoli-microgreens"],
+    reason: "Cooling, mild greens help tame the heat.",
   },
   {
     pattern: /chicken|poultry|turkey|duck/i,
@@ -83,14 +85,9 @@ const RULES: Rule[] = [
     reason: "A balanced blend that complements lean poultry.",
   },
   {
-    pattern: /spicy|hot|chilli|chili|heat|curry|harissa|sichuan/i,
-    ids: ["mild-family-blend", "broccoli-microgreens"],
-    reason: "Cooling, mild greens help tame the heat.",
-  },
-  {
-    pattern: /dessert|sweet|cake|chocolate|pancake/i,
-    ids: ["pea-shoots"],
-    reason: "Sweet pea shoots add a fresh, green counterpoint to something sweet.",
+    pattern: /steak|beef|lamb|roast|grill|bbq|barbecue|kebab|pork|meat/i,
+    ids: ["chefs-blend", "radish-microgreens", "spicy-mix"],
+    reason: "Peppery, bold greens cut through rich, grilled meat.",
   },
 ]
 
