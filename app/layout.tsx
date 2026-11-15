@@ -19,8 +19,12 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "MicroRootsKe | Farm operations",
-  description: "Operations dashboard for MicroRootsKe agritech ERP.",
+  title: {
+    default: "MicroRootsKe — Fresh microgreens, grown in Nairobi",
+    template: "%s | MicroRootsKe",
+  },
+  description:
+    "Cut-to-order microgreens and living trays grown in controlled Nairobi grow rooms, delivered fresh to kitchens and homes across the city.",
   generator: "v0.app",
   icons: {
     icon: [
