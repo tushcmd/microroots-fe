@@ -37,6 +37,20 @@ export const site = {
   },
   // Digits only, with country code, for wa.me links.
   whatsappNumber: "254700000000",
+  // Details used on the legal pages (Privacy, Terms, Cookies). Sourced from
+  // the website legal documentation prepared for MicroRootsKE.
+  legal: {
+    controller: "MicroRootsKE",
+    operator: "Alexander D. Maina Karanja",
+    email: "alexanderdavid254@gmail.com",
+    phoneDisplay: "+254 727 590 752",
+    phoneDial: "+254727590752",
+    website: "https://microrootske.odoo.com/",
+    location: "Nairobi, Kenya",
+    updatedAt: "16 November 2026",
+    supervisoryAuthority: "Office of the Data Protection Commissioner",
+    supervisoryAuthorityUrl: "https://www.odpc.go.ke",
+  },
 } as const
 
 export const navLinks: NavLink[] = [

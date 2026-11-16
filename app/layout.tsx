@@ -1,9 +1,10 @@
-import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
 import { Geist, Inter } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { ThemeProvider } from "@/components/shared/theme-provider"
 import { Toaster } from "@/components/shared/toaster"
+import { AnalyticsGate } from "@/components/site/analytics-gate"
+import { CookieBanner } from "@/components/site/cookie-banner"
 import "./globals.css"
 
 const geist = Geist({
@@ -52,7 +53,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <AuthProvider>{children}</AuthProvider>
           <Toaster />
         </ThemeProvider>
-        {process.env.NODE_ENV === "production" && <Analytics />}
+        <AnalyticsGate />
+        <CookieBanner />
       </body>
     </html>
   )

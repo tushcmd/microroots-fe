@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
+import Link from "next/link"
 import { CheckCircle2, Loader2 } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -193,7 +194,15 @@ export function LeadForm({
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
-          We’ll only use your details to reply to this enquiry.
+          We’ll only use your details to reply to this enquiry. By submitting you agree to our{" "}
+          <Link href="/privacy" className="font-medium text-foreground underline underline-offset-2">
+            Privacy Policy
+          </Link>{" "}
+          and{" "}
+          <Link href="/terms" className="font-medium text-foreground underline underline-offset-2">
+            Terms of Service
+          </Link>
+          .
         </p>
         <Button type="submit" disabled={status === "loading"} className="sm:w-auto">
           {status === "loading" ? (
