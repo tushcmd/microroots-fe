@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState, type FormEvent } from "react"
+import Link from "next/link"
 import { Check, CheckCircle2, Leaf, Loader2, Sparkles } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -328,7 +329,11 @@ export function BoxBuilder() {
         <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
           <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden="true" />
           This registers your interest — we’ll confirm your plan and first delivery before any
-          payment.
+          payment. By registering you agree to our{" "}
+          <Link href="/privacy" className="font-medium text-foreground underline underline-offset-2">
+            Privacy Policy
+          </Link>
+          .
         </p>
         <button
           type="submit"

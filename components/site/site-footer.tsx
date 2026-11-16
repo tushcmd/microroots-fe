@@ -71,6 +71,20 @@ export function SiteFooter() {
             © {new Date().getFullYear()} {site.name}. Grown fresh in Nairobi.
           </p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {[
+              { href: "/privacy", label: "Privacy" },
+              { href: "/terms", label: "Terms" },
+              { href: "/cookies", label: "Cookies" },
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <span aria-hidden="true" className="hidden h-3 w-px bg-border sm:block" />
             {site.contact.socials.map((social) => (
               <a
                 key={social.label}
