@@ -13,6 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { ThemeToggle } from "@/components/shared/theme-toggle"
 import { navLinks, site } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
@@ -48,12 +49,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-1.5">
-          <Link
-            href="/login"
-            className="hidden rounded-lg px-2.5 py-2 text-xs font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 sm:inline-flex"
-          >
-            Staff login
-          </Link>
+          <ThemeToggle />
           <Link
             href="/shop"
             className={cn(buttonVariants({ size: "sm" }), "hidden sm:inline-flex")}
@@ -105,16 +101,6 @@ export function SiteHeader() {
                     </Link>
                   }
                 />
-                <SheetClose
-                  render={
-                    <Link
-                      href="/login"
-                      className="rounded-lg px-3 py-2 text-center text-xs font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
-                    />
-                  }
-                >
-                  Staff login
-                </SheetClose>
                 <p className="pt-1 text-center text-[11px] text-muted-foreground">
                   {site.contact.location}
                 </p>
